@@ -101,12 +101,6 @@
                       color:${a === 'no' ? '#DC2626' : 'var(--text-secondary)'};
                       transition: all 0.2s;">✗ No</button>
                   </div>
-                  ${a === 'no' ? `
-                    <div class="fade-in" style="background:var(--grade-bp-bg); border:1px solid #FED7AA; border-radius:9px; padding:10px 14px; font-size:12px; color:#7C2D12; line-height:1.6; display:flex; gap:8px;">
-                      <span style="font-size:14px;">⚠️</span>
-                      <span>${q.tip}</span>
-                    </div>
-                  ` : ''}
                 </div>
               </div>
             </div>
@@ -115,8 +109,28 @@
 
         // Validation: Ensure all questions in current section are answered
         const allAnswered = curSec.questions.every(q => ans[q.id]);
+        
+        let warningHtml = '';
+        if (sec === sections.length - 1 && allAnswered) {
+          const failed = allQ.filter(q => ans[q.id] === 'no');
+          if (failed.length > 0) {
+            warningHtml = `
+              <div class="card fade-in" style="margin-bottom:20px; border-color:var(--warning-border); background:var(--warning-bg);">
+                <h3 style="font-size:16px; font-weight:600; color:var(--warning-title); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                  <span>⚠️</span> Review your vulnerabilities before continuing
+                </h3>
+                ${failed.map((q, i) => \`
+                  <div style="margin-bottom:12px; padding-left:10px; border-left:3px solid var(--warning-border);">
+                    <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">\${i+1}. \${q.text}</div>
+                    <div style="font-size:12px; color:var(--warning-text); line-height:1.6;">\${q.tip}</div>
+                  </div>
+                \`).join('')}
+              </div>
+            `;
+          }
+        }
 
-        html += `
+        html += warningHtml + `
           <div style="display:flex; justify-content:space-between; margin-top:20px;">
             <button onclick="prevSec()" ${sec === 0 ? 'disabled' : ''} class="btn-primary" style="background:var(--card-bg); color:var(--text-primary) !important; border:1px solid var(--border-color);">← Previous</button>
             <button onclick="nextSec()" ${!allAnswered ? 'disabled' : ''} class="btn-primary" style="opacity: ${!allAnswered ? '0.5' : '1'};">

@@ -20,6 +20,11 @@
   --grade-cp-bg: #FEF2F2;
   --grade-c: #991B1B;
   --grade-c-bg: #FEF2F2;
+
+  --warning-bg: #FFF7ED;
+  --warning-border: #FED7AA;
+  --warning-text: #7C2D12;
+  --warning-title: #92400E;
 }
 
 [data-theme="dark"] {
@@ -35,6 +40,11 @@
   --grade-b-bg: #7c2d12;
   --grade-cp-bg: #7f1d1d;
   --grade-c-bg: #450a0a;
+
+  --warning-bg: #431407;
+  --warning-border: #9A3412;
+  --warning-text: #FFEDD5;
+  --warning-title: #FDBA74;
 }
 
 * {
