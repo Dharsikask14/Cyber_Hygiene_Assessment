@@ -58,6 +58,17 @@
         .input-group input:focus {
             border-color: var(--primary-color);
         }
+        .input-group input.error {
+            border-color: var(--grade-cp);
+            background: var(--grade-cp-bg);
+        }
+        .error-text {
+            color: var(--grade-cp);
+            font-size: 11px;
+            margin-top: 4px;
+            display: none;
+            font-weight: 500;
+        }
         .status-box {
             margin-top: 24px;
             padding: 16px;
@@ -74,24 +85,10 @@
             color: var(--grade-cp);
             border: 1px solid var(--grade-cp);
         }
-        .back-home {
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            transition: all 0.2s;
-            padding: 10px 20px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
-            font-size: 14px;
-        }
-        .back-home:hover {
-            background: var(--bg-color);
-            color: var(--primary-color);
-            transform: translateY(-1px);
+        .btn-secondary {
+            width: auto;
+            min-width: 160px;
+            padding: 10px 24px;
         }
     </style>
 </head>
@@ -113,7 +110,7 @@
             </div>
         </div>
     </nav>
-        <div class="card verify-card">
+    <div class="container fade-in">
             <div style="margin-bottom: 30px;">
                 <div style="width: 64px; height: 64px; background: var(--grade-a-bg); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); margin: 0 auto 16px;">
                     <i class="ti ti-certificate" style="font-size: 32px;"></i>
@@ -125,11 +122,12 @@
             <div class="input-group">
                 <label>Certificate ID</label>
                 <input type="text" id="cert-id" placeholder="e.g. CERT-2024-001">
+                <div id="id-error" class="error-text">Please enter the Certificate ID</div>
             </div>
-
             <div class="input-group">
                 <label>Recipient Full Name</label>
                 <input type="text" id="recipient-name" placeholder="Name as printed on certificate">
+                <div id="name-error" class="error-text">Please enter the recipient name</div>
             </div>
 
             <button class="btn-primary" style="width: 100%;" onclick="verifyCertificate()">
@@ -145,14 +143,34 @@
 
     <script>
         async function verifyCertificate() {
-            const certId = document.getElementById('cert-id').value.trim();
-            const name = document.getElementById('recipient-name').value.trim();
+            const idInput = document.getElementById('cert-id');
+            const nameInput = document.getElementById('recipient-name');
+            const idError = document.getElementById('id-error');
+            const nameError = document.getElementById('name-error');
+            
+            const certId = idInput.value.trim();
+            const name = nameInput.value.trim();
             const statusBox = document.getElementById('status-box');
 
-            if (!certId || !name) {
-                alert('Please fill in both fields.');
-                return;
+            // Reset errors
+            idInput.classList.remove('error');
+            nameInput.classList.remove('error');
+            idError.style.display = 'none';
+            nameError.style.display = 'none';
+
+            let hasError = false;
+            if (!certId) {
+                idInput.classList.add('error');
+                idError.style.display = 'block';
+                hasError = true;
             }
+            if (!name) {
+                nameInput.classList.add('error');
+                nameError.style.display = 'block';
+                hasError = true;
+            }
+
+            if (hasError) return;
 
             statusBox.style.display = 'block';
             statusBox.className = 'status-box';
