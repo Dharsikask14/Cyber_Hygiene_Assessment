@@ -409,6 +409,7 @@
       transition: all 0.2s;
       white-space: nowrap;
       font-family: inherit;
+      text-decoration: none;
     }
 
     .btn:hover {
@@ -911,6 +912,12 @@
 
     function analyzeUploaded() {
       if (!uploadedData) return;
+      
+      const analyzeBtn = document.getElementById('upload-analyze-btn');
+      analyzeBtn.disabled = true;
+      analyzeBtn.style.opacity = '0.5';
+      analyzeBtn.style.cursor = 'not-allowed';
+
       document.getElementById('upload-preview').style.display = 'none';
       uploadProc.style.display = 'flex';
       setStatus('active', 'Analyzing');
