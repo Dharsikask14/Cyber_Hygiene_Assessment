@@ -655,18 +655,17 @@
           <div id="file-details" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; padding: 10px; background: var(--bg-color); border-radius: 8px;">
              <i class="ti ti-file"></i> <span id="file-name-text">filename.jpg</span> • <span id="file-size-text">0 KB</span>
           </div>
-        </div>
-
-        <div class="controls" style="margin-top: 10px;">
-          <a href="../index.html" class="btn">
-            <i class="ti ti-arrow-left"></i> Back to Home
-          </a>
-          <button class="btn primary" id="upload-analyze-btn" onclick="analyzeUploaded()" disabled style="opacity: 0.5; cursor: not-allowed;">
-            <i class="ti ti-scan"></i> Analyze Certificate
-          </button>
-          <button class="btn danger" id="upload-clear-btn" onclick="clearUpload()" style="display: none;">
-            <i class="ti ti-trash"></i> Clear
-          </button>
+          <div class="controls">
+            <a href="../index.html" class="back-btn">
+              <i class="ti ti-arrow-left"></i> Back
+            </a>
+            <button class="btn primary" onclick="analyzeUploaded()">
+              <i class="ti ti-scan"></i> Analyze Certificate
+            </button>
+            <button class="btn danger" onclick="clearUpload()">
+              <i class="ti ti-trash"></i> Clear
+            </button>
+          </div>
         </div>
 
         <div class="card processing" id="upload-processing"
@@ -853,13 +852,6 @@
           document.getElementById('upload-zone').style.display = 'none';
           document.getElementById('upload-preview').style.display = 'block';
           document.getElementById('result-card').style.display = 'none';
-          
-          const analyzeBtn = document.getElementById('upload-analyze-btn');
-          analyzeBtn.disabled = false;
-          analyzeBtn.style.opacity = '1';
-          analyzeBtn.style.cursor = 'pointer';
-          document.getElementById('upload-clear-btn').style.display = 'inline-flex';
-          
           setStatus('', 'PDF Ready');
         } catch (err) {
           console.error(err);
@@ -875,12 +867,6 @@
           document.getElementById('upload-zone').style.display = 'none';
           document.getElementById('upload-preview').style.display = 'block';
           document.getElementById('result-card').style.display = 'none';
-          
-          const analyzeBtn = document.getElementById('upload-analyze-btn');
-          analyzeBtn.disabled = false;
-          analyzeBtn.style.opacity = '1';
-          analyzeBtn.style.cursor = 'pointer';
-          document.getElementById('upload-clear-btn').style.display = 'inline-flex';
         };
         reader.readAsDataURL(file);
       }
@@ -897,16 +883,10 @@
 
     function clearUpload() {
       document.getElementById('upload-preview').style.display = 'none';
-      document.getElementById('upload-zone').style.display = 'block';
+      document.getElementById('upload-zone').style.display = '';
       document.getElementById('file-input').value = '';
       document.getElementById('result-card').style.display = 'none';
       uploadedData = null;
-
-      const analyzeBtn = document.getElementById('upload-analyze-btn');
-      analyzeBtn.disabled = true;
-      analyzeBtn.style.opacity = '0.5';
-      analyzeBtn.style.cursor = 'not-allowed';
-      document.getElementById('upload-clear-btn').style.display = 'none';
     }
 
     function analyzeUploaded() {
