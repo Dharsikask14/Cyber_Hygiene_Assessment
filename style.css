@@ -62,7 +62,7 @@ body {
 }
 
 .container {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 0 16px 80px;
 }
@@ -192,7 +192,7 @@ nav .nav-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
-  align-items: center;
+  align-items: start;
 }
 
 .services-grid {
