@@ -6,24 +6,84 @@
   <title>Cyber Hygiene Assessment — Hackers InfoTech</title>
   <meta name="description" content="Free Cyber Hygiene Assessment by Hackers InfoTech, Coimbatore"/>
   
-  <!-- React & Babel -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
-  <!-- External Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  
-  <!-- Fonts & Styles -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css" />
+  <script src="shared.js" defer></script>
 </head>
 <body>
-  <div id="root"></div>
+  <!-- NAV -->
+  <nav>
+    <div class="nav-content">
+      <a href="index.html" class="nav-brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8" opacity=".15"/>
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8" strokeWidth="1.5"/>
+          <path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span>Hackers InfoTech</span>
+      </a>
+      <div class="nav-right">
+        <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
+        <span class="nav-city">Coimbatore, India</span>
+      </div>
+    </div>
+  </nav>
 
-  <!-- Main Application Script -->
-  <script type="text/babel" data-type="module" src="app.js"></script>
+  <div class="container fade-in">
+    <!-- HOME SECTION -->
+    <div style="text-align:center; padding: 56px 0 40px;">
+      <div class="floating" style="display:inline-flex; align-items:center; gap:6px; background:var(--card-bg); border:1px solid var(--primary-color); border-radius:20px; padding:5px 14px; font-size:12px; color:var(--primary-color); font-weight:500; margin-bottom:24px;">
+        <span style="width:6px; height:6px; border-radius:50%; background:var(--primary-color); display:inline-block;"></span>Free Cyber Hygiene Assessment
+      </div>
+      
+      <h1 style="font-size:40px; font-weight:600; line-height:1.15; margin:0 0 16px; letter-spacing:-.8px;">
+        How safe are you<br/><span style="color:var(--primary-color)">online?</span>
+      </h1>
+      
+      <p style="font-size:15px; color:var(--text-secondary); max-width:480px; margin:0 auto 32px; line-height:1.7;">
+        Answer 28–31 questions. Get your cyber safety grade, PDF certificate, full report — emailed instantly.
+      </p>
+      
+      <a href="type.html" class="btn-primary floating" style="font-size:16px; padding:14px 32px;">Start Free Assessment →</a>
+      
+      <div style="margin-top:14px; font-size:13px; color:var(--text-secondary);">
+        5 minutes · 100% free · Certificate + PDF report included
+      </div>
+    </div>
+
+    <!-- Verify Certificate Card -->
+    <div class="card floating" style="text-align: center; margin-bottom: 24px; padding: 16px 20px;">
+      <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Verify a Certificate</h3>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Did someone share a Hackers InfoTech certificate with you? Verify its authenticity here.</p>
+      <div style="display: flex; gap: 8px; max-width: 400px; margin: 0 auto;">
+        <input type="text" placeholder="Enter Certificate ID..." style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color); color: var(--text-primary); outline: none;">
+        <button class="btn-primary" style="padding: 8px 16px; font-size: 13px; border-radius: 8px;">Verify</button>
+      </div>
+    </div>
+
+    <!-- DPDP Act Notice -->
+    <div class="card floating" style="display:flex; gap:12px; align-items:flex-start; background: var(--grade-bp-bg); border-color: #FCD34D; margin-bottom: 32px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 20h20L12 2z" fill="#F59E0B" opacity=".2"/><path d="M12 2L2 20h20L12 2z" stroke="#F59E0B" strokeWidth="1.5"/><path d="M12 9v5M12 16v1" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round"/></svg>
+      <div>
+        <div style="font-weight:600; font-size:13px; color:#92400E; margin-bottom:3px;">DPDP Act 2023 — Are you compliant?</div>
+        <div style="font-size:12px; color:#78350F; line-height:1.6;">Every business storing customer data in India is legally required to comply with the Digital Personal Data Protection Act 2023. This assessment helps identify your compliance gaps.</div>
+      </div>
+    </div>
+
+    <!-- New Our Services Content -->
+    <div class="card fade-in" style="margin-bottom: 32px;">
+      <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 12px; color: var(--primary-color);">Our Services</h2>
+      <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
+        Our Services Cyber Security Solution encompass a wide range of practices and tools designed to protect systems, networks, and data from cyber threats. These services aim to prevent, detect, and respond to cyberattacks, ensuring the confidentiality, integrity, and availability of information. 
+      </p>
+      <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
+        Cyber Security Consulting is a specialised field where experts provide advice and solutions to organisations to protect their information systems from cyber threats. These consultants assess security risks, develop protection strategies, and implement measures to safeguard an organisations digital assets.
+      </p>
+      <p style="font-size: 14px; color: var(--text-secondary);">
+        Cyber Security Training plays a crucial role in this process by equipping individuals with the knowledge and skills needed to identify, prevent, and respond to cyber threats effectively. Cyberattacks are constantly evolving, becoming more sophisticated and frequent. As a result, organisations and individuals must stay informed about the latest threats and best practices for defending against them.
+      </p>
+    </div>
+
+  </div>
 </body>
 </html>

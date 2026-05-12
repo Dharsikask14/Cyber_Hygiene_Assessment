@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Who is this for? — Hackers InfoTech</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
+  <script src="shared.js" defer></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-content">
+      <a href="index.html" class="nav-brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8" opacity=".15"/>
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8" strokeWidth="1.5"/>
+          <path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span>Hackers InfoTech</span>
+      </a>
+      <div class="nav-right">
+        <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
+        <span class="nav-city">Coimbatore, India</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container fade-in" style="padding-top: 48px;">
+    <h2 style="font-size: 26px; font-weight: 600; margin-bottom: 8px; text-align: center;">Who is this for?</h2>
+    <p style="text-align: center; color: var(--text-secondary); margin-bottom: 36px; font-size: 15px;">Choose the profile that best matches you</p>
+    
+    <div class="grid-2" style="max-width: 600px; margin: 0 auto 32px;">
+      <!-- General Public -->
+      <div class="card floating" style="cursor: pointer; border: 2px solid #DDD6FE; transition: transform 0.2s;" onclick="selectType('general')">
+        <div style="font-size: 36px; margin-bottom: 10px;">👤</div>
+        <div style="font-weight: 600; font-size: 16px; margin-bottom: 3px;">General Public</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">Phone · Laptop · Internet User</div>
+        
+        <div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">
+          <div style="width:6px; height:6px; border-radius:50%; background:#7C3AED;"></div>
+          <span style="font-size:12px; color:var(--text-secondary);">No technical knowledge needed</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">
+          <div style="width:6px; height:6px; border-radius:50%; background:#7C3AED;"></div>
+          <span style="font-size:12px; color:var(--text-secondary);">Mobile, passwords, banking</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">
+          <div style="width:6px; height:6px; border-radius:50%; background:#7C3AED;"></div>
+          <span style="font-size:12px; color:var(--text-secondary);">Scam & fraud awareness</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">
+          <div style="width:6px; height:6px; border-radius:50%; background:#7C3AED;"></div>
+          <span style="font-size:12px; color:var(--text-secondary);">28 questions · ~4 min</span>
+        </div>
+
+        <div style="margin-top:16px; background:#F5F3FF; border-radius:8px; padding:9px; text-align:center; font-weight:600; font-size:13px; color:#7C3AED;">Start →</div>
+      </div>
+
+      <!-- IT Users -->
+      <div class="card floating" style="cursor: pointer; border: 2px solid #BAE6FD; transition: transform 0.2s; animation-delay: 0.2s;" onclick="selectType('it')">
+        <div style="font-size: 36px; margin-bottom: 10px;">💻</div>
+        <div style="font-weight: 600; font-size: 16px; margin-bottom: 3px;">IT & Tech Users</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">Developers · IT Staff · Freelancers</div>
+        
+        <div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">
+          <div style="width:6px; height:6px; border-radius:50%; background:#0EA5E9;"></div>
+          <span style="font-size:12px; color:var(--text-secondary);">Advanced security practices</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">
+          <div style="width:6px; height:6px; border-radius:50%; background:#0EA5E9;"></div>
+          <span style="font-size:12px; color:var(--text-secondary);">DevOps, cloud, network</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">
+          <div style="width:6px; height:6px; border-radius:50%; background:#0EA5E9;"></div>
+          <span style="font-size:12px; color:var(--text-secondary);">Threat detection & tools</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">
+          <div style="width:6px; height:6px; border-radius:50%; background:#0EA5E9;"></div>
+          <span style="font-size:12px; color:var(--text-secondary);">31 questions · ~6 min</span>
+        </div>
+
+        <div style="margin-top:16px; background:#F0F9FF; border-radius:8px; padding:9px; text-align:center; font-weight:600; font-size:13px; color:#0EA5E9;">Start →</div>
+      </div>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="index.html" style="color: var(--text-secondary); text-decoration: none; font-size: 13px;">← Back</a>
+    </div>
+  </div>
+
+  <script>
+    function selectType(type) {
+      localStorage.setItem('assessmentType', type);
+      localStorage.removeItem('answers'); // Reset previous answers
+      localStorage.removeItem('currentSection');
+      if(type === 'general') {
+        window.location.href = 'assessment_general.html';
+      } else {
+        window.location.href = 'assessment_it.html';
+      }
+    }
+  </script>
+</body>
+</html>

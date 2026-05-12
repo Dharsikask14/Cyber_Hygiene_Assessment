@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>General Assessment — Hackers InfoTech</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
+  <script src="shared.js" defer></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-content">
+      <a href="index.html" class="nav-brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8" opacity=".15"/>
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8" strokeWidth="1.5"/>
+          <path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span>Hackers InfoTech</span>
+      </a>
+      <div class="nav-right">
+        <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
+        <span class="nav-city">Coimbatore, India</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container fade-in" style="padding-top: 32px;" id="quizContainer">
+    <!-- Rendered by JS -->
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const type = 'general';
+      localStorage.setItem('assessmentType', type);
+      const sections = GENERAL_SECTIONS;
+      
+      let sec = parseInt(localStorage.getItem('currentSection') || '0');
+      let ans = JSON.parse(localStorage.getItem('answers') || '{}');
+      
+      const allQ = sections.flatMap(s => s.questions);
+      
+      function render() {
+        const curSec = sections[sec];
+        const progPct = allQ.length > 0 ? Math.round((Object.keys(ans).length / allQ.length) * 100) : 0;
+        
+        const done = (s) => s.questions.every(q => ans[q.id]);
+        
+        let html = `
+          <div style="margin-bottom:22px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span style="font-size:13px; color:var(--text-secondary); font-weight:500;">Section ${sec+1} of ${sections.length}</span>
+              <span style="font-size:13px; color:var(--text-secondary);">${progPct}% complete</span>
+            </div>
+            <div style="background:var(--border-color); border-radius:99px; height:6px;">
+              <div style="background:var(--primary-color); height:6px; border-radius:99px; width:${progPct}%; transition:width .4s;"></div>
+            </div>
+            <div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">
+              ${sections.map((s, i) => `
+                <div style="padding:4px 12px; border-radius:99px; font-size:12px; font-weight:500; cursor:${i <= sec || done(sections[i-1]) ? 'pointer' : 'not-allowed'};
+                  background:${i === sec ? 'var(--primary-color)' : done(s) ? 'var(--grade-ap-bg)' : 'var(--bg-color)'};
+                  color:${i === sec ? '#fff' : done(s) ? 'var(--grade-ap)' : 'var(--text-secondary)'};
+                  border:1px solid ${i === sec ? 'var(--primary-color)' : done(s) ? '#A7F3D0' : 'var(--border-color)'}"
+                  onclick="${(i <= sec || done(sections[i-1])) ? `goToSec(${i})` : ''}">
+                  ${s.icon} ${s.title}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="card fade-in" style="margin-bottom:14px; padding:18px 20px;">
+            <div style="font-size:22px;">${curSec.icon}</div>
+            <h3 style="font-size:18px; font-weight:600; margin:6px 0 4px;">${curSec.title}</h3>
+            <div style="font-size:13px; color:var(--text-secondary);">${curSec.questions.length} questions</div>
+          </div>
+        `;
+
+        curSec.questions.forEach((q, qi) => {
+          const a = ans[q.id];
+          const borderColor = a === "no" ? "#FCA5A5" : a === "yes" ? "#A7F3D0" : "var(--border-color)";
+          
+          html += `
+            <div class="card" style="margin-bottom:10px; padding:18px 20px; border-color:${borderColor};">
+              <div style="display:flex; gap:12px;">
+                <div style="width:26px; height:26px; border-radius:50%; background:var(--bg-color); border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; color:var(--text-secondary); flex-shrink:0;">${qi+1}</div>
+                <div style="flex:1;">
+                  <div style="font-size:14px; font-weight:500; line-height:1.6; margin-bottom:12px;">${q.text}</div>
+                  <div style="display:flex; gap:10px; margin-bottom:${a === 'no' ? '12px' : '0'};">
+                    <button onclick="setAns('${q.id}', 'yes')" style="
+                      padding:8px 22px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+                      border:1.5px solid ${a === 'yes' ? '#059669' : 'var(--border-color)'};
+                      background:${a === 'yes' ? 'var(--grade-ap-bg)' : 'var(--bg-color)'};
+                      color:${a === 'yes' ? '#059669' : 'var(--text-secondary)'};
+                      transition: all 0.2s;">✓ Yes</button>
+                    <button onclick="setAns('${q.id}', 'no')" style="
+                      padding:8px 22px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+                      border:1.5px solid ${a === 'no' ? '#DC2626' : 'var(--border-color)'};
+                      background:${a === 'no' ? 'var(--grade-cp-bg)' : 'var(--bg-color)'};
+                      color:${a === 'no' ? '#DC2626' : 'var(--text-secondary)'};
+                      transition: all 0.2s;">✗ No</button>
+                  </div>
+                  ${a === 'no' ? `
+                    <div class="fade-in" style="background:var(--grade-bp-bg); border:1px solid #FED7AA; border-radius:9px; padding:10px 14px; font-size:12px; color:#7C2D12; line-height:1.6; display:flex; gap:8px;">
+                      <span style="font-size:14px;">⚠️</span>
+                      <span>${q.tip}</span>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        // Validation: Ensure all questions in current section are answered
+        const allAnswered = curSec.questions.every(q => ans[q.id]);
+
+        html += `
+          <div style="display:flex; justify-content:space-between; margin-top:20px;">
+            <button onclick="prevSec()" ${sec === 0 ? 'disabled' : ''} class="btn-primary" style="background:var(--card-bg); color:var(--text-primary) !important; border:1px solid var(--border-color);">← Previous</button>
+            <button onclick="nextSec()" ${!allAnswered ? 'disabled' : ''} class="btn-primary" style="opacity: ${!allAnswered ? '0.5' : '1'};">
+              ${sec === sections.length - 1 ? "See My Score →" : "Next Section →"}
+            </button>
+          </div>
+        `;
+        
+        document.getElementById('quizContainer').innerHTML = html;
+      }
+
+      window.setAns = (qId, val) => {
+        ans[qId] = val;
+        localStorage.setItem('answers', JSON.stringify(ans));
+        render();
+      };
+
+      window.goToSec = (i) => {
+        sec = i;
+        localStorage.setItem('currentSection', sec);
+        window.scrollTo({top:0, behavior:'smooth'});
+        render();
+      };
+
+      window.prevSec = () => {
+        if(sec > 0) goToSec(sec - 1);
+      };
+
+      window.nextSec = () => {
+        const curSec = sections[sec];
+        const allAnswered = curSec.questions.every(q => ans[q.id]);
+        if(!allAnswered) return; // Prevent moving if not answered
+
+        if (sec < sections.length - 1) {
+          goToSec(sec + 1);
+        } else {
+          window.location.href = 'lead.html';
+        }
+      };
+
+      render();
+    });
+  </script>
+</body>
+</html>
