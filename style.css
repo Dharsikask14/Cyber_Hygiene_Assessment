@@ -236,3 +236,17 @@ nav .nav-content {
     grid-template-columns: 1fr;
   }
 }
+
+/* Logo Icon Tricks */
+.logo-icon {
+  width: 80px;
+  height: auto;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  filter: contrast(50) brightness(1.5) grayscale(1);
+}
+
+[data-theme="dark"] .logo-icon {
+  mix-blend-mode: screen;
+  filter: invert(1) contrast(50) brightness(0.7) grayscale(1);
+}
