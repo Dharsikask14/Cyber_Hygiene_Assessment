@@ -6,17 +6,17 @@
   <title>Your Results — Hackers InfoTech</title>
   
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../css/style.css" />
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script src="shared.js" defer></script>
+  <script src="../js/shared.js" defer></script>
 </head>
 <body>
   <nav>
     <div class="nav-content">
-      <a href="index.html" class="nav-brand">
+      <a href="../index.html" class="nav-brand">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8" opacity=".15"/>
           <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8" strokeWidth="1.5"/>
@@ -48,7 +48,7 @@
       const lead = JSON.parse(localStorage.getItem('lead') || '{}');
 
       if(!type || !lead.email) {
-        window.location.href = 'index.html';
+        window.location.href = '../index.html';
         return;
       }
 
@@ -121,7 +121,7 @@
           <div style="font-size:13px; color:#94A3B8; margin-bottom:22px; line-height:1.7;">Book a free 30-minute consultation. We will walk through your results and create a personalised cyber security plan.</div>
           <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
             <a href="${BRAND.bookingUrl}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="font-size:14px; padding:12px 24px;">📅 Book Free 30-Min Call</a>
-            <button onclick="window.location.href='index.html'" style="background:transparent; border:1px solid #1E3050; color:#94A3B8; border-radius:9px; padding:12px 24px; font-size:14px; cursor:pointer;">Retake Assessment</button>
+            <button onclick="window.location.href='../index.html'" style="background:transparent; border:1px solid #1E3050; color:#94A3B8; border-radius:9px; padding:12px 24px; font-size:14px; cursor:pointer;">Retake Assessment</button>
           </div>
           <div style="margin-top:20px; padding-top:20px; border-top:1px solid #1E3050; display:flex; justify-content:center; gap:24px; flex-wrap:wrap;">
             <span style="font-size:12px; color:#64748B;">🌐 ${BRAND.url}</span>
