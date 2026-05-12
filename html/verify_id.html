@@ -141,12 +141,12 @@
 
             <div class="input-group">
                 <label>Certificate ID</label>
-                <input type="text" id="cert-id" placeholder="e.g. CERT-2024-001">
+                <input type="text" id="cert-id" placeholder="e.g. CERT-2024-001" oninput="clearError('cert-id', 'id-error')">
                 <div id="id-error" class="error-text">Please enter the Certificate ID</div>
             </div>
             <div class="input-group">
                 <label>Recipient Full Name</label>
-                <input type="text" id="recipient-name" placeholder="Name as printed on certificate">
+                <input type="text" id="recipient-name" placeholder="Name as printed on certificate" oninput="clearError('recipient-name', 'name-error')">
                 <div id="name-error" class="error-text">Please enter the recipient name</div>
             </div>
 
@@ -162,6 +162,13 @@
     </div>
 
     <script>
+        function clearError(inputId, errorId) {
+            const input = document.getElementById(inputId);
+            const error = document.getElementById(errorId);
+            input.classList.remove('error');
+            error.style.display = 'none';
+        }
+
         async function verifyCertificate() {
             const idInput = document.getElementById('cert-id');
             const nameInput = document.getElementById('recipient-name');
