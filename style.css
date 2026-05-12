@@ -239,7 +239,7 @@ nav .nav-content {
 
 /* Logo Icon Tricks */
 .logo-icon {
-  width: 80px;
+  width: 180px;
   height: auto;
   object-fit: contain;
   mix-blend-mode: multiply;
