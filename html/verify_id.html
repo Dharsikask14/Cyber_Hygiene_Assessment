@@ -6,10 +6,10 @@
     <title>Verify through ID — Hackers InfoTech</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+    <script src="../js/shared.js" defer></script>
     <style>
         body {
-            overflow: hidden;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
@@ -19,8 +19,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            gap: 20px;
+            padding: 40px 20px;
+            gap: 30px;
         }
         .verify-card {
             max-width: 450px;
@@ -81,24 +81,45 @@
             gap: 8px;
             color: var(--text-secondary);
             font-weight: 500;
-            transition: color 0.2s;
+            transition: all 0.2s;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            font-size: 14px;
         }
         .back-home:hover {
+            background: var(--bg-color);
             color: var(--primary-color);
+            transform: translateY(-1px);
         }
     </style>
 </head>
 <body>
-
-
-    <div class="container">
+    <!-- NAV -->
+    <nav>
+        <div class="nav-content">
+            <a href="../index.html" class="nav-brand">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8" opacity=".15" />
+                    <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8" strokeWidth="1.5" />
+                    <path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>Hackers InfoTech</span>
+            </a>
+            <div class="nav-right">
+                <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
+                <span class="nav-city">Coimbatore, India</span>
+            </div>
+        </div>
+    </nav>
         <div class="card verify-card">
             <div style="margin-bottom: 30px;">
                 <div style="width: 64px; height: 64px; background: var(--grade-a-bg); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); margin: 0 auto 16px;">
-                    <i class="ti ti-id" style="font-size: 32px;"></i>
+                    <i class="ti ti-certificate" style="font-size: 32px;"></i>
                 </div>
-                <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Manual Verification</h2>
-                <p style="color: var(--text-secondary); font-size: 14px;">Enter the details exactly as shown on the certificate.</p>
+                <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Certificate Verification</h2>
+                <p style="color: var(--text-secondary); font-size: 14px;">Verify authenticity through secure ID lookup.</p>
             </div>
 
             <div class="input-group">
@@ -111,13 +132,13 @@
                 <input type="text" id="recipient-name" placeholder="Name as printed on certificate">
             </div>
 
-            <button class="btn primary" style="width: 100%; padding: 14px; font-size: 15px;" onclick="verifyCertificate()">
+            <button class="btn-primary" style="width: 100%;" onclick="verifyCertificate()">
                 <i class="ti ti-shield-check"></i> Verify Certificate
             </button>
 
             <div id="status-box" class="status-box"></div>
         </div>
-        <a href="../index.html" class="back-home">
+        <a href="../index.html" class="btn-secondary">
             <i class="ti ti-arrow-left"></i> Back to Home
         </a>
     </div>
