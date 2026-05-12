@@ -237,23 +237,6 @@ nav .nav-content {
   }
 }
 
-.hero-graphic-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  position: relative;
-  padding: 40px;
-  min-height: 500px;
-  background: radial-gradient(circle at center, rgba(14, 165, 233, 0.03) 0%, transparent 70%);
-  border-radius: 30px;
-}
-
-[data-theme="dark"] .hero-graphic-col {
-  background: radial-gradient(circle at center, rgba(14, 165, 233, 0.05) 0%, transparent 70%);
-}
-
 .features-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -312,15 +295,14 @@ nav .nav-content {
 
 /* Logo Icon Tricks */
 .logo-icon {
-  width: 360px; /* Match the new layout */
+  width: 180px;
   height: auto;
   object-fit: contain;
   mix-blend-mode: multiply;
-  filter: grayscale(1) contrast(1.2) brightness(1.1);
-  transition: all 0.5s ease;
+  filter: contrast(50) brightness(1.5) grayscale(1);
 }
 
 [data-theme="dark"] .logo-icon {
   mix-blend-mode: screen;
-  filter: invert(1) grayscale(1) contrast(1.2) brightness(0.9);
+  filter: invert(1) contrast(50) brightness(0.7) grayscale(1);
 }
