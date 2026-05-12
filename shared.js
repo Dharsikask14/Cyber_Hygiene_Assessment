@@ -13,7 +13,7 @@ const BRAND = {
   },
 };
 
-const GENERAL_SECTIONS = [
+window.GENERAL_SECTIONS = [
   { id:"mobile", icon:"📱", title:"Mobile Phone Safety", questions:[
     {id:"g1",  w:3, text:"Do you have a screen lock (PIN / fingerprint / face lock) on your phone?",                     tip:"Anyone can open your phone and access your photos, WhatsApp, and banking apps without a lock."},
     {id:"g2",  w:3, text:"Do you update your phone's software whenever updates are available?",                          tip:"Old software has security holes hackers exploit silently. Enable auto-update in Settings."},
@@ -56,7 +56,7 @@ const GENERAL_SECTIONS = [
   ]},
 ];
 
-const IT_SECTIONS = [
+window.IT_SECTIONS = [
   { id:"iam", icon:"🔐", title:"Identity & Access Management", questions:[
     {id:"t1",  w:3, text:"Do you use a password manager (Bitwarden, 1Password, KeePass) for all credentials?",        tip:"Reusing passwords is the #1 cause of account takeovers. Bitwarden is free & open-source."},
     {id:"t2",  w:3, text:"Is TOTP-based MFA (not just SMS) enabled on email, GitHub, cloud, and VPN accounts?",       tip:"SMS OTP can be SIM-swapped in India in under 2 hours. Use Google Authenticator or Authy."},
@@ -104,14 +104,14 @@ const IT_SECTIONS = [
   ]},
 ];
 
-const ALL = { general: GENERAL_SECTIONS, it: IT_SECTIONS };
+window.ALL = { general: window.GENERAL_SECTIONS, it: window.IT_SECTIONS };
 
-function maxScore(type) {
-  if (!ALL[type]) return 0;
-  return ALL[type].reduce((s, sec) => s + sec.questions.reduce((a, q) => a + q.w, 0), 0);
+window.maxScore = function(type) {
+  if (!window.ALL[type]) return 0;
+  return window.ALL[type].reduce((s, sec) => s + sec.questions.reduce((a, q) => a + q.w, 0), 0);
 }
 
-function getGrade(p) {
+window.getGrade = function(p) {
   if (p >= 95) return { grade: "A+", label: "Cyber Safe Champion", color: "var(--grade-ap)", bg: "var(--grade-ap-bg)", desc: "Excellent! You follow best security practices. You are well protected." };
   if (p >= 85) return { grade: "A", label: "Very Good", color: "var(--grade-a)", bg: "var(--grade-a-bg)", desc: "Strong security habits with only minor gaps to address." };
   if (p >= 75) return { grade: "B+", label: "Above Average", color: "var(--grade-bp)", bg: "var(--grade-bp-bg)", desc: "Good effort, but a few risky habits remain that need attention." };

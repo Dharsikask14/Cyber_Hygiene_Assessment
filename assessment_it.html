@@ -32,6 +32,54 @@
   </div>
 
   <script>
+    const IT_SECTIONS = [
+      { id:"iam", icon:"🔐", title:"Identity & Access Management", questions:[
+        {id:"t1",  w:3, text:"Do you use a password manager (Bitwarden, 1Password, KeePass) for all credentials?",        tip:"Reusing passwords is the #1 cause of account takeovers. Bitwarden is free & open-source."},
+        {id:"t2",  w:3, text:"Is TOTP-based MFA (not just SMS) enabled on email, GitHub, cloud, and VPN accounts?",       tip:"SMS OTP can be SIM-swapped in India in under 2 hours. Use Google Authenticator or Authy."},
+        {id:"t3",  w:2, text:"Do you use a separate non-admin account for daily browsing and work?",                      tip:"Using an admin account daily means any malware runs with full system privileges."},
+        {id:"t4",  w:2, text:"Do you audit and revoke unused OAuth/third-party app permissions regularly?",               tip:"Check myaccount.google.com/permissions — revoke all apps you no longer use."},
+        {id:"t5",  w:2, text:"Do you use unique randomly-generated passwords (20+ characters) per service?",              tip:"Short/reused passwords are cracked via credential stuffing within hours of a breach."},
+      ]},
+      { id:"device", icon:"🖥️", title:"Device & OS Hardening", questions:[
+        {id:"t6",  w:3, text:"Is your OS fully updated with the latest security patches applied within 30 days?",          tip:"Unpatched OS is the #1 attack vector. Enable Windows Update or macOS auto-update."},
+        {id:"t7",  w:3, text:"Is full-disk encryption (BitLocker / FileVault / LUKS) enabled on your laptop?",            tip:"Physical theft = all data exposed without FDE. BitLocker is free on Windows Pro/Enterprise."},
+        {id:"t8",  w:2, text:"Is Secure Boot enabled and BIOS protected with a password?",                               tip:"Without Secure Boot, bootkits and rootkits can persist undetected across reinstalls."},
+        {id:"t9",  w:2, text:"Do you disable unused services — Bluetooth off when not needed, SMBv1 disabled, RDP closed?",tip:"Every open service is an attack surface. Close RDP port 3389 if you do not use remote desktop."},
+        {id:"t10", w:2, text:"Do you verify SHA256 file hashes when downloading tools/software from the internet?",       tip:"Compromised download mirrors serve malware-laced files. Always verify hash from official source."},
+      ]},
+      { id:"network", icon:"🌐", title:"Network & Browser Security", questions:[
+        {id:"t11", w:3, text:"Do you use a reputable VPN (ProtonVPN, Mullvad) on public or untrusted networks?",          tip:"Public Wi-Fi enables trivial MITM attacks. Always use a paid, no-log VPN on networks you don't control."},
+        {id:"t12", w:3, text:"Have you changed your home router's default admin credentials and disabled WPS?",           tip:"Default credentials are public knowledge. Disable WPS — it has a known brute-force vulnerability."},
+        {id:"t13", w:2, text:"Do you use DNS-over-HTTPS (DoH) or a private encrypted DNS (1.1.1.1, 9.9.9.9)?",          tip:"Plain DNS leaks your browsing history and can be hijacked. Use NextDNS for system-wide encrypted DNS."},
+        {id:"t14", w:2, text:"Do you use browser security extensions like uBlock Origin and Privacy Badger?",             tip:"uBlock Origin (free) blocks 99% of malicious ads and scripts. Essential for any professional."},
+        {id:"t15", w:2, text:"Is your home/office Wi-Fi using WPA3 or at minimum WPA2-AES encryption?",                  tip:"WEP and WPA (TKIP) are cracked in minutes. Check router settings — upgrade to WPA2-AES minimum."},
+      ]},
+      { id:"phishing", icon:"📧", title:"Phishing & Social Engineering", questions:[
+        {id:"t16", w:3, text:"Can you identify spear phishing emails that use your name, company, or role?",              tip:"Verify any unexpected request involving money, credentials, or access by calling the sender directly."},
+        {id:"t17", w:2, text:"Do you hover over links to verify the actual destination URL before clicking?",             tip:"Displayed text can say 'paypal.com' while the actual link goes to 'paypa1.ru'. Always hover to check."},
+        {id:"t18", w:3, text:"Do you avoid plugging in unknown USB drives received as gifts or found in public?",         tip:"A malicious USB can execute payloads within seconds of connection. Never plug in an unknown USB."},
+        {id:"t19", w:2, text:"Have you verified your domain's DMARC, DKIM, and SPF records if you run a business email?",tip:"Without DMARC, attackers can spoof your email domain to phish your clients."},
+      ]},
+      { id:"data", icon:"💾", title:"Data Protection & Backup", questions:[
+        {id:"t20", w:3, text:"Do you follow the 3-2-1 backup rule (3 copies, 2 media types, 1 offsite)?",                tip:"Ransomware encrypts local and network drives simultaneously. Only an offsite backup guarantees recovery."},
+        {id:"t21", w:3, text:"Is sensitive data encrypted before uploading to cloud?",                                    tip:"Encrypt sensitive files with Veracrypt (free) or 7-Zip AES-256 before uploading."},
+        {id:"t22", w:2, text:"Do you use secure deletion tools (Eraser / shred) instead of regular delete for sensitive files?",tip:"Regular delete leaves data fully recoverable with free tools. Use Eraser (Windows) or shred (Linux)."},
+        {id:"t23", w:2, text:"Are your cloud storage sharing links set to 'Restricted' — not 'Anyone with the link'?",   tip:"Public Google Drive links get indexed by search engines and accessed by bots within hours."},
+      ]},
+      { id:"tools", icon:"🛡️", title:"Security Tools & Monitoring", questions:[
+        {id:"t24", w:2, text:"Do you monitor Have I Been Pwned for your email address in data breaches?",                 tip:"Free at haveibeenpwned.com — enable breach alerts. You may already be compromised without knowing."},
+        {id:"t25", w:2, text:"Do you use VirusTotal to scan suspicious files and URLs before opening them?",             tip:"Free at virustotal.com — check against 70+ antivirus engines. Takes 10 seconds."},
+        {id:"t26", w:2, text:"Do you review installed browser extensions periodically and remove unknown ones?",          tip:"Malicious extensions read all your web traffic and passwords in real time."},
+        {id:"t27", w:2, text:"Are ALL installed applications (not just OS) kept up to date with auto-updates enabled?",  tip:"Use Patch My PC (Windows, free) to keep all applications updated automatically."},
+      ]},
+      { id:"cloud", icon:"☁️", title:"Cloud & DevOps Security", questions:[
+        {id:"t28", w:3, text:"Are your cloud accounts (AWS/GCP/Azure/personal) using MFA — not just passwords?",         tip:"Cloud account takeover leads to data theft plus unexpected billing. Enable MFA on root/admin accounts."},
+        {id:"t29", w:3, text:"Do you store API keys, tokens, and secrets in a secrets manager — NOT hardcoded in code?", tip:"Hardcoded secrets in GitHub repos are found by bots within minutes of a push."},
+        {id:"t30", w:2, text:"Do you scan your public GitHub/GitLab repos for accidentally committed secrets?",          tip:"Use GitGuardian (free tier) or git-secrets to scan your repos."},
+        {id:"t31", w:2, text:"Do you review connected app sessions periodically on Google, Apple, and Microsoft accounts?",tip:"Go to myaccount.google.com → Security → Your Devices. Revoke old sessions quarterly."},
+      ]},
+    ];
+
     document.addEventListener('DOMContentLoaded', () => {
       const type = 'it';
       localStorage.setItem('assessmentType', type);
@@ -101,6 +149,12 @@
                       color:${a === 'no' ? '#DC2626' : 'var(--text-secondary)'};
                       transition: all 0.2s;">✗ No</button>
                   </div>
+                  ${a === 'no' ? `
+                    <div class="fade-in" style="background:var(--warning-bg); border:1px solid var(--warning-border); border-radius:9px; padding:10px 14px; font-size:12px; color:var(--warning-text); line-height:1.6; display:flex; gap:8px;">
+                      <span style="font-size:14px;">⚠️</span>
+                      <span>${q.tip}</span>
+                    </div>
+                  ` : ''}
                 </div>
               </div>
             </div>
@@ -119,12 +173,12 @@
                 <h3 style="font-size:16px; font-weight:600; color:var(--warning-title); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
                   <span>⚠️</span> Review your vulnerabilities before continuing
                 </h3>
-                ${failed.map((q, i) => \`
+                ${failed.map((q, i) => `
                   <div style="margin-bottom:12px; padding-left:10px; border-left:3px solid var(--warning-border);">
-                    <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">\${i+1}. \${q.text}</div>
-                    <div style="font-size:12px; color:var(--warning-text); line-height:1.6;">\${q.tip}</div>
+                    <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">${i+1}. ${q.text}</div>
+                    <div style="font-size:12px; color:var(--warning-text); line-height:1.6;">${q.tip}</div>
                   </div>
-                \`).join('')}
+                `).join('')}
               </div>
             `;
           }

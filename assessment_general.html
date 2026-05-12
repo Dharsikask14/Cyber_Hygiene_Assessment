@@ -32,6 +32,49 @@
   </div>
 
   <script>
+    const GENERAL_SECTIONS = [
+      { id:"mobile", icon:"📱", title:"Mobile Phone Safety", questions:[
+        {id:"g1",  w:3, text:"Do you have a screen lock (PIN / fingerprint / face lock) on your phone?",                     tip:"Anyone can open your phone and access your photos, WhatsApp, and banking apps without a lock."},
+        {id:"g2",  w:3, text:"Do you update your phone's software whenever updates are available?",                          tip:"Old software has security holes hackers exploit silently. Enable auto-update in Settings."},
+        {id:"g3",  w:3, text:"Do you download apps ONLY from Google Play Store or Apple App Store?",                        tip:"Apps from other websites can steal your contacts, photos, and banking details. No APK files from WhatsApp links."},
+        {id:"g4",  w:2, text:"Do you check app permissions before installing (e.g., a torch app asking for your contacts)?",tip:"Apps can secretly read your messages, camera, and location. Ask: does this app really need this permission?"},
+        {id:"g5",  w:3, text:"Do you avoid installing apps sent via WhatsApp links or unknown websites?",                   tip:"This is the #1 way phones get hacked in India. Only use Play Store / App Store — always."},
+      ]},
+      { id:"passwords", icon:"🔑", title:"Passwords & Account Security", questions:[
+        {id:"g6",  w:3, text:"Do you use different passwords for WhatsApp, email, Facebook, and banking apps?",             tip:"If one password is stolen, ALL your accounts get hacked. Use Google Password Manager (free)."},
+        {id:"g7",  w:2, text:"Is your password longer than 8 characters with numbers and symbols?",                        tip:"Short/simple passwords are cracked in seconds. Example: Sun@2024#Kovai"},
+        {id:"g8",  w:3, text:"Do you use Two-Step Verification / OTP login on WhatsApp, Gmail, and Facebook?",             tip:"Even if someone steals your password, 2-Step Verification stops them. Enable it NOW — free, 2 minutes."},
+        {id:"g9",  w:3, text:"Do you NEVER share your OTP with anyone — even if they claim to be from your bank?",         tip:"Banks NEVER ask for OTP by phone. Anyone asking for your OTP is a SCAMMER. Hang up immediately."},
+        {id:"g10", w:2, text:"Do you avoid saving passwords on shared or public computers?",                               tip:"Anyone using that computer can see your saved passwords. Always log out on shared devices."},
+      ]},
+      { id:"laptop", icon:"💻", title:"Laptop & Computer Safety", questions:[
+        {id:"g11", w:3, text:"Are you using genuine/original Windows or macOS — NOT a cracked or pirated version?",        tip:"Pirated OS gets NO security updates. 80–90% of malware attacks target unpatched systems."},
+        {id:"g12", w:3, text:"Do you have antivirus software installed and updated on your laptop?",                       tip:"Windows Defender is free and built-in — make sure it is ON in Windows Security settings."},
+        {id:"g13", w:3, text:"Do you download software ONLY from official websites?",                                      tip:"Fake download sites bundle malware with software. Always check the URL carefully."},
+        {id:"g14", w:3, text:"Do you avoid using cracked or pirated software (Photoshop, Office, games)?",                tip:"Cracked software is the #1 source of ransomware in India. Use free alternatives: LibreOffice, GIMP."},
+        {id:"g15", w:2, text:"Do you take backups of important files to an external drive or cloud (Google Drive)?",       tip:"Ransomware can delete ALL your files. Back up to Google Drive (free 15GB) or USB monthly."},
+      ]},
+      { id:"internet", icon:"🌐", title:"Internet & Browsing Safety", questions:[
+        {id:"g16", w:3, text:"Do you check if a website starts with 'https://' before entering your password or card details?", tip:"'http://' sites are not secure. NEVER enter passwords or card details on http:// sites."},
+        {id:"g17", w:3, text:"Do you avoid clicking links in SMS, WhatsApp, or email without verifying the sender?",       tip:"This is Phishing. If unsure, type the website address manually — never click the link."},
+        {id:"g18", w:3, text:"Do you avoid connecting to unknown public Wi-Fi for banking or shopping?",                   tip:"Public Wi-Fi is like shouting your password in a crowd. Use mobile data (4G/5G) for banking."},
+        {id:"g19", w:2, text:"Do you ignore pop-ups saying 'Your phone has a virus! Click here to clean it!'?",           tip:"These are FAKE pop-ups. Close the browser tab immediately. Never call any number shown."},
+        {id:"g20", w:3, text:"Do you check the full URL before clicking? (e.g., 'sbi-login.net' is FAKE — real is 'onlinesbi.sbi')", tip:"Scammers create websites identical to real bank sites. Bookmark your bank and use only that."},
+      ]},
+      { id:"banking", icon:"💳", title:"Online Payments & Banking", questions:[
+        {id:"g21", w:3, text:"Do you use only official bank apps from Play Store / App Store for UPI and net banking?",    tip:"Fake banking apps steal your credentials. Check the developer name carefully before installing."},
+        {id:"g22", w:3, text:"Do you verify UPI payment requests before approving — especially 'Collect Money' requests?", tip:"'Collect Money' means YOU are paying THEM. NEVER approve unexpected collect requests."},
+        {id:"g23", w:3, text:"Do you avoid screen-sharing while doing banking transactions?",                              tip:"Any app with screen access can see your OTP and card numbers. Real banks NEVER ask for screen access."},
+        {id:"g24", w:2, text:"Do you have transaction SMS alerts enabled for all your bank accounts?",                     tip:"Enable alerts so you know instantly if any transaction happens. Report unknowns within 24 hours."},
+      ]},
+      { id:"scams", icon:"⚠️", title:"Scam & Fraud Awareness", questions:[
+        {id:"g25", w:3, text:"Do you know that NO bank, government, or police will EVER ask for your OTP or PIN on a call?", tip:"ANY call asking for OTP/PIN is a SCAM — 100% of the time. Hang up and block the number."},
+        {id:"g26", w:3, text:"Do you avoid 'KYC expiry', 'FASTag blocked', 'TRAI disconnecting your number' scam calls?",tip:"Government/TRAI/bank NEVER calls for KYC over phone. Hang up. Block. Report on Sanchar Saathi."},
+        {id:"g27", w:2, text:"Do you avoid lottery/prize scams — 'You won ₹50 lakh, send ₹500 to claim'?",               tip:"No real prize ever asks you to pay first. Always a scam. Delete and block."},
+        {id:"g28", w:2, text:"Can you identify a fake email? (wrong sender address, urgent language, suspicious link)",   tip:"Check sender email carefully. Look for spelling errors and 'Verify NOW' urgency. Never click."},
+      ]},
+    ];
+
     document.addEventListener('DOMContentLoaded', () => {
       const type = 'general';
       localStorage.setItem('assessmentType', type);
@@ -101,6 +144,12 @@
                       color:${a === 'no' ? '#DC2626' : 'var(--text-secondary)'};
                       transition: all 0.2s;">✗ No</button>
                   </div>
+                  ${a === 'no' ? `
+                    <div class="fade-in" style="background:var(--warning-bg); border:1px solid var(--warning-border); border-radius:9px; padding:10px 14px; font-size:12px; color:var(--warning-text); line-height:1.6; display:flex; gap:8px;">
+                      <span style="font-size:14px;">⚠️</span>
+                      <span>${q.tip}</span>
+                    </div>
+                  ` : ''}
                 </div>
               </div>
             </div>
@@ -119,12 +168,12 @@
                 <h3 style="font-size:16px; font-weight:600; color:var(--warning-title); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
                   <span>⚠️</span> Review your vulnerabilities before continuing
                 </h3>
-                ${failed.map((q, i) => \`
+                ${failed.map((q, i) => `
                   <div style="margin-bottom:12px; padding-left:10px; border-left:3px solid var(--warning-border);">
-                    <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">\${i+1}. \${q.text}</div>
-                    <div style="font-size:12px; color:var(--warning-text); line-height:1.6;">\${q.tip}</div>
+                    <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">${i+1}. ${q.text}</div>
+                    <div style="font-size:12px; color:var(--warning-text); line-height:1.6;">${q.tip}</div>
                   </div>
-                \`).join('')}
+                `).join('')}
               </div>
             `;
           }
