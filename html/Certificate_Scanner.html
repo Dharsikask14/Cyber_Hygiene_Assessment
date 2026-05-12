@@ -656,17 +656,18 @@
           <div id="file-details" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; padding: 10px; background: var(--bg-color); border-radius: 8px;">
              <i class="ti ti-file"></i> <span id="file-name-text">filename.jpg</span> • <span id="file-size-text">0 KB</span>
           </div>
-          <div class="controls" style="margin-top: 10px;">
-            <a href="../index.html" class="btn">
-              <i class="ti ti-arrow-left"></i> Back to Home
-            </a>
-            <button class="btn primary" id="upload-analyze-btn" onclick="analyzeUploaded()">
-              <i class="ti ti-scan"></i> Analyze Certificate
-            </button>
-            <button class="btn danger" id="upload-clear-btn" onclick="clearUpload()">
-              <i class="ti ti-trash"></i> Clear
-            </button>
-          </div>
+        </div>
+
+        <div class="controls" style="margin-top: 10px;">
+          <a href="../index.html" class="btn">
+            <i class="ti ti-arrow-left"></i> Back to Home
+          </a>
+          <button class="btn primary" id="upload-analyze-btn" onclick="analyzeUploaded()" disabled style="opacity: 0.5; cursor: not-allowed;">
+            <i class="ti ti-scan"></i> Analyze Certificate
+          </button>
+          <button class="btn danger" id="upload-clear-btn" onclick="clearUpload()" style="display: none;">
+            <i class="ti ti-trash"></i> Clear
+          </button>
         </div>
 
         <div class="card processing" id="upload-processing"
@@ -858,6 +859,7 @@
           analyzeBtn.disabled = false;
           analyzeBtn.style.opacity = '1';
           analyzeBtn.style.cursor = 'pointer';
+          document.getElementById('upload-clear-btn').style.display = 'inline-flex';
           
           setStatus('', 'PDF Ready');
         } catch (err) {
@@ -879,6 +881,7 @@
           analyzeBtn.disabled = false;
           analyzeBtn.style.opacity = '1';
           analyzeBtn.style.cursor = 'pointer';
+          document.getElementById('upload-clear-btn').style.display = 'inline-flex';
         };
         reader.readAsDataURL(file);
       }
@@ -904,6 +907,7 @@
       analyzeBtn.disabled = true;
       analyzeBtn.style.opacity = '0.5';
       analyzeBtn.style.cursor = 'not-allowed';
+      document.getElementById('upload-clear-btn').style.display = 'none';
     }
 
     function analyzeUploaded() {
@@ -914,6 +918,7 @@
       analyzeBtn.style.opacity = '0.5';
       analyzeBtn.style.cursor = 'not-allowed';
 
+      document.getElementById('upload-preview').style.display = 'none';
       uploadProc.style.display = 'flex';
       setStatus('active', 'Analyzing');
       analyzeCertificate(uploadedData, 'upload');
