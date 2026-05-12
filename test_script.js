@@ -1,37 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>General Assessment — Hackers InfoTech</title>
-  
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css" />
-  <script src="shared.js" defer></script>
-</head>
-<body>
-  <nav>
-    <div class="nav-content">
-      <a href="index.html" class="nav-brand">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8" opacity=".15"/>
-          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8" strokeWidth="1.5"/>
-          <path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        <span>Hackers InfoTech</span>
-      </a>
-      <div class="nav-right">
-        <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
-        <span class="nav-city">Coimbatore, India</span>
-      </div>
-    </div>
-  </nav>
 
-  <div class="container fade-in" style="padding-top: 32px;" id="quizContainer">
-    <!-- Rendered by JS -->
-  </div>
-
-  <script>
     const GENERAL_SECTIONS = [
       { id:"mobile", icon:"📱", title:"Mobile Phone Safety", questions:[
         {id:"g1",  w:3, text:"Do you have a screen lock (PIN / fingerprint / face lock) on your phone?",                     tip:"Anyone can open your phone and access your photos, WhatsApp, and banking apps without a lock."},
@@ -81,10 +48,6 @@
       const sections = GENERAL_SECTIONS;
       
       let sec = parseInt(localStorage.getItem('currentSection') || '0');
-      if (sec >= sections.length || isNaN(sec)) {
-        sec = 0;
-        localStorage.setItem('currentSection', '0');
-      }
       let ans = JSON.parse(localStorage.getItem('answers') || '{}');
       
       const allQ = sections.flatMap(s => s.questions);
@@ -148,6 +111,12 @@
                       color:${a === 'no' ? '#DC2626' : 'var(--text-secondary)'};
                       transition: all 0.2s;">✗ No</button>
                   </div>
+                  ${a === 'no' ? `
+                    <div class="fade-in" style="background:var(--warning-bg); border:1px solid var(--warning-border); border-radius:9px; padding:10px 14px; font-size:12px; color:var(--warning-text); line-height:1.6; display:flex; gap:8px;">
+                      <span style="font-size:14px;">⚠️</span>
+                      <span>${q.tip}</span>
+                    </div>
+                  ` : ''}
                 </div>
               </div>
             </div>
@@ -166,12 +135,12 @@
                 <h3 style="font-size:16px; font-weight:600; color:var(--warning-title); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
                   <span>⚠️</span> Review your vulnerabilities before continuing
                 </h3>
-                ${failed.map((q, i) => 
-                  '<div style="margin-bottom:12px; padding-left:10px; border-left:3px solid var(--warning-border);">' +
-                    '<div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">' + (i+1) + '. ' + q.text + '</div>' +
-                    '<div style="font-size:12px; color:var(--warning-text); line-height:1.6;">' + q.tip + '</div>' +
-                  '</div>'
-                ).join('')}
+                ${failed.map((q, i) => `
+                  <div style="margin-bottom:12px; padding-left:10px; border-left:3px solid var(--warning-border);">
+                    <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">${i+1}. ${q.text}</div>
+                    <div style="font-size:12px; color:var(--warning-text); line-height:1.6;">${q.tip}</div>
+                  </div>
+                `).join('')}
               </div>
             `;
           }
@@ -220,6 +189,4 @@
 
       render();
     });
-  </script>
-</body>
-</html>
+  
