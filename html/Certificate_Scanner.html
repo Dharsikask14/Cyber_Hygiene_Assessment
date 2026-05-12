@@ -647,8 +647,14 @@
         </div>
         <input type="file" id="file-input" accept="image/*,.pdf" onchange="handleFileUpload(event)" style="display:none;" />
 
-        <div id="upload-preview">
-          <img id="uploaded-img" alt="Uploaded certificate" />
+        <div id="upload-preview" style="display:none;">
+          <div style="text-align: center; margin-bottom: 16px;">
+            <span class="status-badge done"><i class="ti ti-check"></i> File Ready for Analysis</span>
+          </div>
+          <img id="uploaded-img" alt="Uploaded certificate" style="max-height: 400px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 12px;" />
+          <div id="file-details" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; padding: 10px; background: var(--bg-color); border-radius: 8px;">
+             <i class="ti ti-file"></i> <span id="file-name-text">filename.jpg</span> • <span id="file-size-text">0 KB</span>
+          </div>
           <div class="controls">
             <a href="../index.html" class="back-btn">
               <i class="ti ti-arrow-left"></i> Back
@@ -822,6 +828,9 @@
     async function handleFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      document.getElementById('file-name-text').textContent = file.name;
+      document.getElementById('file-size-text').textContent = (file.size / 1024).toFixed(1) + ' KB';
 
       if (file.type === 'application/pdf') {
         setStatus('active', 'Reading PDF');
