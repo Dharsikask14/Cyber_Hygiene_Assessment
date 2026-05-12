@@ -12,13 +12,30 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
   <link rel="stylesheet" href="../css/style.css" />
   <script src="../js/shared.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    // Initialize PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
 
   <style>
     /* Scanner specific styles adapting to theme variables */
+    body {
+      overflow: hidden;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      height: calc(100vh - 64px);
+      overflow-y: auto;
+      padding-bottom: 40px;
+    }
+
     .scanner-container {
       max-width: 680px;
       margin: 0 auto;
-      padding-top: 36px;
+      padding-top: 24px;
     }
 
     .scanner-header {
@@ -31,7 +48,27 @@
     .logo-group {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      background: var(--border-color);
     }
 
     .logo-icon {
@@ -521,10 +558,12 @@
       <!-- Header -->
       <div class="scanner-header">
         <div class="logo-group">
+          <a href="../index.html" class="back-btn">
+            <i class="ti ti-arrow-left"></i> Back
+          </a>
           <div class="logo-icon"><i class="ti ti-certificate"></i></div>
           <div>
             <div class="logo-title">Certificate Verification</div>
-
           </div>
         </div>
         <span class="status-badge" id="status-badge">
@@ -597,9 +636,9 @@
           ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
           <i class="ti ti-file-upload"></i>
           <h3>Drop certificate image here</h3>
-          <p>or click to browse &mdash; JPG, PNG, WebP supported</p>
+          <p>or click to browse &mdash; JPG, PNG, WebP, PDF supported</p>
         </div>
-        <input type="file" id="file-input" accept="image/*" onchange="handleFileUpload(event)" style="display:none;" />
+        <input type="file" id="file-input" accept="image/*,.pdf" onchange="handleFileUpload(event)" style="display:none;" />
 
         <div id="upload-preview">
           <img id="uploaded-img" alt="Uploaded certificate" />
@@ -767,18 +806,46 @@
     }
 
     // ── Upload ─────────────────────────────────────────────────────────────────
-    function handleFileUpload(e) {
+    async function handleFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        uploadedData = ev.target.result;
-        document.getElementById('uploaded-img').src = uploadedData;
-        document.getElementById('upload-zone').style.display = 'none';
-        document.getElementById('upload-preview').style.display = '';
-        document.getElementById('result-card').style.display = 'none';
-      };
-      reader.readAsDataURL(file);
+
+      if (file.type === 'application/pdf') {
+        setStatus('active', 'Reading PDF');
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const page = await pdf.getPage(1);
+          const viewport = page.getViewport({ scale: 2 });
+          const tempCanvas = document.createElement('canvas');
+          const context = tempCanvas.getContext('2d');
+          tempCanvas.height = viewport.height;
+          tempCanvas.width = viewport.width;
+          
+          await page.render({ canvasContext: context, viewport: viewport }).promise;
+          uploadedData = tempCanvas.toDataURL('image/jpeg', 0.92);
+          
+          document.getElementById('uploaded-img').src = uploadedData;
+          document.getElementById('upload-zone').style.display = 'none';
+          document.getElementById('upload-preview').style.display = '';
+          document.getElementById('result-card').style.display = 'none';
+          setStatus('', 'PDF Ready');
+        } catch (err) {
+          console.error(err);
+          alert('Could not read PDF. Please try an image.');
+          setStatus('error', 'PDF Error');
+        }
+      } else {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          uploadedData = ev.target.result;
+          document.getElementById('uploaded-img').src = uploadedData;
+          document.getElementById('upload-zone').style.display = 'none';
+          document.getElementById('upload-preview').style.display = '';
+          document.getElementById('result-card').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
     }
 
     function onDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
