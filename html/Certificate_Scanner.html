@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certificate Scanner — Hackers InfoTech</title>
+  <meta name="description" content="Scan and verify certificates from Hackers InfoTech" />
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <script src="../js/shared.js" defer></script>
+
+  <style>
+    /* Scanner specific styles adapting to theme variables */
+    .scanner-container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding-top: 36px;
+    }
+
+    .scanner-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--grade-a-bg);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-color);
+      font-size: 24px;
+    }
+
+    .logo-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .logo-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-secondary);
+    }
+
+    .status-badge.active {
+      background: var(--grade-a-bg);
+      color: var(--grade-a);
+      border-color: var(--grade-a);
+    }
+
+    .status-badge.done {
+      background: var(--grade-ap-bg);
+      color: var(--grade-ap);
+      border-color: var(--grade-ap);
+    }
+
+    .status-badge.error {
+      background: var(--grade-cp-bg);
+      color: var(--grade-cp);
+      border-color: var(--grade-cp);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .pulse {
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.25;
+      }
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--bg-color);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      border: none;
+      background: transparent;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
+    }
+
+    .tab.active {
+      background: var(--card-bg);
+      color: var(--text-primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-color);
+    }
+
+    .tab:hover:not(.active) {
+      color: var(--text-primary);
+    }
+
+    .scanner-wrap {
+      position: relative;
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      aspect-ratio: 4/3;
+      border: 1px solid var(--border-color);
+    }
+
+    @media (max-width: 480px) {
+      .scanner-wrap {
+        aspect-ratio: 3/4;
+      }
+    }
+
+    #video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    #preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+
+    .cam-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #94A3B8;
+      background: var(--card-bg);
+    }
+
+    .cam-placeholder i {
+      font-size: 48px;
+      color: var(--border-color);
+    }
+
+    .cam-placeholder p {
+      font-size: 14px;
+      text-align: center;
+      padding: 0 1rem;
+      color: var(--text-secondary);
+    }
+
+    .overlay-frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 82%;
+      height: 68%;
+      border: 1.5px solid rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+      pointer-events: none;
+      display: none;
+    }
+
+    .corner {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+    }
+
+    .c-tl {
+      top: -2px;
+      left: -2px;
+      border-top: 3px solid #0EA5E9;
+      border-left: 3px solid #0EA5E9;
+      border-radius: 6px 0 0 0;
+    }
+
+    .c-tr {
+      top: -2px;
+      right: -2px;
+      border-top: 3px solid #0EA5E9;
+      border-right: 3px solid #0EA5E9;
+      border-radius: 0 6px 0 0;
+    }
+
+    .c-bl {
+      bottom: -2px;
+      left: -2px;
+      border-bottom: 3px solid #0EA5E9;
+      border-left: 3px solid #0EA5E9;
+      border-radius: 0 0 0 6px;
+    }
+
+    .c-br {
+      bottom: -2px;
+      right: -2px;
+      border-bottom: 3px solid #0EA5E9;
+      border-right: 3px solid #0EA5E9;
+      border-radius: 0 0 6px 0;
+    }
+
+    .scan-line {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #0EA5E9, transparent);
+      top: 10%;
+      animation: scan 2s ease-in-out infinite;
+    }
+
+    @keyframes scan {
+
+      0%,
+      100% {
+        top: 8%;
+        opacity: 1;
+      }
+
+      50% {
+        top: 88%;
+        opacity: 0.6;
+      }
+    }
+
+    .frame-hint {
+      position: absolute;
+      bottom: -28px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 500;
+    }
+
+    .processing {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      color: #fff;
+      z-index: 10;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #0EA5E9;
+      animation: spin 0.75s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .processing p {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .hint-bar {
+      background: var(--grade-a-bg);
+      border-radius: 12px;
+      border: 1px solid var(--grade-a);
+      padding: 12px 16px;
+      font-size: 14px;
+      color: var(--text-primary);
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hint-bar i {
+      color: var(--grade-a);
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-primary);
+      transition: all 0.2s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    .btn:hover {
+      background: var(--bg-color);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.primary {
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+    }
+
+    .btn.primary:hover {
+      background: var(--primary-hover);
+      color: #fff;
+    }
+
+    .btn.success {
+      background: var(--grade-ap-bg);
+      color: var(--grade-ap);
+      border-color: var(--grade-ap);
+    }
+
+    .btn.danger {
+      background: var(--grade-cp-bg);
+      color: var(--grade-cp);
+      border-color: var(--grade-cp);
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--border-color);
+      border-radius: 16px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--card-bg);
+      margin-bottom: 16px;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+      background: var(--bg-color);
+      border-color: var(--primary-color);
+    }
+
+    .upload-zone i {
+      font-size: 48px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .upload-zone h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .upload-zone p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .result-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .field-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+      gap: 16px;
+    }
+
+    .field-row:last-child {
+      border-bottom: none;
+    }
+
+    .field-label {
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+
+    .field-value {
+      color: var(--text-primary);
+      font-weight: 600;
+      text-align: right;
+      word-break: break-word;
+    }
+
+    #upload-preview {
+      display: none;
+      text-align: center;
+    }
+
+    #uploaded-img {
+      max-width: 100%;
+      max-height: 400px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      object-fit: contain;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- NAV -->
+  <nav>
+    <div class="nav-content">
+      <a href="../index.html" class="nav-brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8"
+            opacity=".15" />
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8"
+            strokeWidth="1.5" />
+          <path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span>Hackers InfoTech</span>
+      </a>
+      <div class="nav-right">
+        <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
+        <span class="nav-city">Coimbatore, India</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container fade-in">
+    <div class="scanner-container">
+
+      <!-- Header -->
+      <div class="scanner-header">
+        <div class="logo-group">
+          <div class="logo-icon"><i class="ti ti-certificate"></i></div>
+          <div>
+            <div class="logo-title">Certificate Verification</div>
+
+          </div>
+        </div>
+        <span class="status-badge" id="status-badge">
+          <span class="dot"></span> Idle
+        </span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" id="tab-camera" onclick="switchTab('camera')">
+          <i class="ti ti-camera"></i> Camera
+        </button>
+        <button class="tab" id="tab-upload" onclick="switchTab('upload')">
+          <i class="ti ti-upload"></i> Upload Image
+        </button>
+      </div>
+
+      <!-- Camera Section -->
+      <div id="camera-section">
+        <div class="scanner-wrap card" style="padding:0;" id="scanner-wrap">
+          <div class="cam-placeholder" id="cam-placeholder">
+            <i class="ti ti-camera-off"></i>
+            <p>Camera is off.<br>Tap <strong>Start Camera</strong> to begin scanning.</p>
+          </div>
+          <video id="video" autoplay playsinline muted></video>
+          <img id="preview-img" alt="Captured certificate" />
+
+          <div class="overlay-frame" id="overlay-frame">
+            <div class="corner c-tl"></div>
+            <div class="corner c-tr"></div>
+            <div class="corner c-bl"></div>
+            <div class="corner c-br"></div>
+            <div class="scan-line"></div>
+            <div class="frame-hint">Align certificate within the frame</div>
+          </div>
+
+          <div class="processing" id="processing-overlay">
+            <div class="spinner"></div>
+            <p>Analyzing certificate...</p>
+          </div>
+        </div>
+
+        <div class="hint-bar" id="hint-bar">
+          <i class="ti ti-info-circle" style="font-size:20px; flex-shrink:0;"></i>
+          <span id="hint-text">Tap "Start Camera" to begin. Allow camera permission when prompted.</span>
+        </div>
+
+        <div class="controls">
+          <button class="btn primary" id="start-btn" onclick="startCamera()">
+            <i class="ti ti-camera"></i> Start Camera
+          </button>
+          <button class="btn success" id="capture-btn" onclick="captureFrame()" style="display:none;">
+            <i class="ti ti-camera-rotate"></i> Capture
+          </button>
+          <button class="btn" id="switch-btn" onclick="switchCamera()" style="display:none;">
+            <i class="ti ti-switch-horizontal"></i> Flip Camera
+          </button>
+          <button class="btn danger" id="stop-btn" onclick="stopCamera()" style="display:none;">
+            <i class="ti ti-x"></i> Stop
+          </button>
+          <button class="btn" id="rescan-btn" onclick="rescan()" style="display:none;">
+            <i class="ti ti-refresh"></i> Rescan
+          </button>
+        </div>
+      </div>
+
+      <!-- Upload Section -->
+      <div id="upload-section" style="display:none;">
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()"
+          ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+          <i class="ti ti-file-upload"></i>
+          <h3>Drop certificate image here</h3>
+          <p>or click to browse &mdash; JPG, PNG, WebP supported</p>
+        </div>
+        <input type="file" id="file-input" accept="image/*" onchange="handleFileUpload(event)" style="display:none;" />
+
+        <div id="upload-preview">
+          <img id="uploaded-img" alt="Uploaded certificate" />
+          <div class="controls">
+            <button class="btn primary" onclick="analyzeUploaded()">
+              <i class="ti ti-scan"></i> Analyze Certificate
+            </button>
+            <button class="btn danger" onclick="clearUpload()">
+              <i class="ti ti-trash"></i> Clear
+            </button>
+          </div>
+        </div>
+
+        <div class="card processing" id="upload-processing"
+          style="position:relative; min-height:120px; border-radius:16px; display:none; margin-top:16px; background:var(--card-bg);">
+          <div class="spinner" style="border-top-color:var(--primary-color);"></div>
+          <p style="color:var(--text-primary); margin-top:12px;">Analyzing certificate...</p>
+        </div>
+      </div>
+
+      <!-- Result Card -->
+      <div class="card fade-in" id="result-card" style="margin-top:24px; display:none;">
+        <div class="result-header">
+          <div class="result-title">
+            <i class="ti ti-file-check" style="font-size:20px; color:var(--primary-color);"></i> Scan Result
+          </div>
+          <span class="status-badge" id="result-badge"><span class="dot"></span> Verified</span>
+        </div>
+        <div id="result-fields"></div>
+
+        <div class="controls" style="margin-top:20px; justify-content:flex-start;">
+          <button class="btn primary" onclick="downloadResult()">
+            <i class="ti ti-download"></i> Download Report
+          </button>
+          <button class="btn" id="copy-btn" onclick="copyResult()">
+            <i class="ti ti-copy"></i> Copy
+          </button>
+          <button class="btn" onclick="resetAll()">
+            <i class="ti ti-refresh"></i> New Scan
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <script>
+    // ── State ──────────────────────────────────────────────────────────────────
+    let stream = null;
+    let facingMode = 'environment';
+    let capturedData = null;
+    let lastResult = null;
+    let uploadedData = null;
+    let multiCam = false;
+
+    // ── DOM refs ───────────────────────────────────────────────────────────────
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const previewImg = document.getElementById('preview-img');
+    const overlayFrame = document.getElementById('overlay-frame');
+    const procOverlay = document.getElementById('processing-overlay');
+    const uploadProc = document.getElementById('upload-processing');
+    const hintText = document.getElementById('hint-text');
+    const statusBadge = document.getElementById('status-badge');
+    const placeholder = document.getElementById('cam-placeholder');
+
+    // ── Status ─────────────────────────────────────────────────────────────────
+    function setStatus(state, label) {
+      statusBadge.className = 'status-badge ' + state;
+      const pulse = (state === 'active') ? ' pulse' : '';
+      statusBadge.innerHTML = `<span class="dot${pulse}"></span> ${label}`;
+    }
+
+    // ── Tab switching ──────────────────────────────────────────────────────────
+    function switchTab(tab) {
+      document.getElementById('tab-camera').classList.toggle('active', tab === 'camera');
+      document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
+      document.getElementById('camera-section').style.display = tab === 'camera' ? '' : 'none';
+      document.getElementById('upload-section').style.display = tab === 'upload' ? '' : 'none';
+      document.getElementById('result-card').style.display = 'none';
+    }
+
+    // ── Camera ─────────────────────────────────────────────────────────────────
+    async function startCamera() {
+      try {
+        if (stream) stopCamera();
+        const constraints = {
+          video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: false
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        video.style.display = 'block';
+        placeholder.style.display = 'none';
+        previewImg.style.display = 'none';
+        overlayFrame.style.display = '';
+        document.getElementById('result-card').style.display = 'none';
+
+        show('capture-btn'); show('stop-btn');
+        hide('start-btn'); hide('rescan-btn');
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        multiCam = devices.filter(d => d.kind === 'videoinput').length > 1;
+        document.getElementById('switch-btn').style.display = multiCam ? '' : 'none';
+
+        hintText.textContent = 'Position the certificate inside the frame, then tap Capture.';
+        setStatus('active', 'Camera Live');
+      } catch (err) {
+        hintText.textContent = 'Camera access denied. Please allow camera permission in your browser settings and try again.';
+        setStatus('error', 'Blocked');
+      }
+    }
+
+    function stopCamera() {
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+      video.srcObject = null;
+      video.style.display = 'none';
+      overlayFrame.style.display = 'none';
+      placeholder.style.display = 'flex';
+      hide('capture-btn'); hide('stop-btn'); hide('switch-btn'); hide('rescan-btn');
+      show('start-btn');
+      hintText.textContent = 'Tap "Start Camera" to begin. Allow camera permission when prompted.';
+      setStatus('', 'Idle');
+    }
+
+    async function switchCamera() {
+      facingMode = facingMode === 'environment' ? 'user' : 'environment';
+      await startCamera();
+    }
+
+    function captureFrame() {
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      capturedData = canvas.toDataURL('image/jpeg', 0.92);
+
+      previewImg.src = capturedData;
+      previewImg.style.display = 'block';
+      video.style.display = 'none';
+      overlayFrame.style.display = 'none';
+      placeholder.style.display = 'none';
+
+      hide('capture-btn'); hide('stop-btn'); hide('switch-btn');
+      show('rescan-btn');
+
+      // Stop stream after capture
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+
+      hintText.textContent = 'Image captured. Analyzing…';
+      setStatus('active', 'Analyzing');
+      analyzeCertificate(capturedData, 'camera');
+    }
+
+    function rescan() {
+      previewImg.style.display = 'none';
+      hide('rescan-btn');
+      show('start-btn');
+      placeholder.style.display = 'flex';
+      document.getElementById('result-card').style.display = 'none';
+      hintText.textContent = 'Tap "Start Camera" to begin again.';
+      setStatus('', 'Idle');
+    }
+
+    // ── Upload ─────────────────────────────────────────────────────────────────
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        uploadedData = ev.target.result;
+        document.getElementById('uploaded-img').src = uploadedData;
+        document.getElementById('upload-zone').style.display = 'none';
+        document.getElementById('upload-preview').style.display = '';
+        document.getElementById('result-card').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function onDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
+    function onDragLeave() { document.getElementById('upload-zone').classList.remove('dragover'); }
+    function onDrop(e) {
+      e.preventDefault();
+      document.getElementById('upload-zone').classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) { const dt = new DataTransfer(); dt.items.add(file); document.getElementById('file-input').files = dt.files; handleFileUpload({ target: { files: [file] } }); }
+    }
+
+    function clearUpload() {
+      document.getElementById('upload-preview').style.display = 'none';
+      document.getElementById('upload-zone').style.display = '';
+      document.getElementById('file-input').value = '';
+      document.getElementById('result-card').style.display = 'none';
+      uploadedData = null;
+    }
+
+    function analyzeUploaded() {
+      if (!uploadedData) return;
+      document.getElementById('upload-preview').style.display = 'none';
+      uploadProc.style.display = 'flex';
+      setStatus('active', 'Analyzing');
+      analyzeCertificate(uploadedData, 'upload');
+    }
+
+    // ── Core analysis ──────────────────────────────────────────────────────────
+    async function analyzeCertificate(imageData, source) {
+      if (source === 'camera') procOverlay.style.display = 'flex';
+
+      const base64 = imageData.split(',')[1];
+      const mime = imageData.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+
+      const prompt = `You are an expert certificate scanner. Carefully analyze this certificate image and extract all visible information.
+Respond ONLY with a valid JSON object — no markdown fences, no preamble. Use exactly these keys:
+{
+  "isValid": true or false,
+  "certificateType": "type of certificate (e.g. Course Completion, Degree, Professional Certification)",
+  "recipientName": "full name of the person",
+  "issuer": "organization or institution that issued it",
+  "courseOrSubject": "course, subject, or program name",
+  "issueDate": "date issued",
+  "expiryDate": "expiry date or N/A",
+  "credentialId": "certificate/credential ID or N/A",
+  "grade": "grade, score, or distinction if present, else N/A",
+  "verificationStatus": "Verified if it looks like a real certificate, else Unverified",
+  "notes": "any other important details or context"
+}
+If a field is not visible, use "Not found". If this is not a certificate image, set isValid to false and explain in notes.`;
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'base64', media_type: mime, data: base64 } },
+                { type: 'text', text: prompt }
+              ]
+            }]
+          })
+        });
+
+        const data = await res.json();
+        const text = (data.content || []).map(b => b.text || '').join('');
+        let result;
+        try {
+          result = JSON.parse(text.replace(/```json|```/g, '').trim());
+        } catch {
+          result = { isValid: false, certificateType: 'Parse Error', recipientName: 'N/A', issuer: 'N/A', courseOrSubject: 'N/A', issueDate: 'N/A', expiryDate: 'N/A', credentialId: 'N/A', grade: 'N/A', verificationStatus: 'Unverified', notes: text || 'Could not parse the response.' };
+        }
+        showResult(result);
+      } catch (err) {
+        showResult({ isValid: false, certificateType: 'Error', recipientName: '—', issuer: '—', courseOrSubject: '—', issueDate: '—', expiryDate: '—', credentialId: '—', grade: '—', verificationStatus: 'Error', notes: 'Could not reach analysis service. Check your internet connection and try again.' });
+      } finally {
+        if (source === 'camera') procOverlay.style.display = 'none';
+        if (source === 'upload') { uploadProc.style.display = 'none'; document.getElementById('upload-preview').style.display = ''; }
+      }
+    }
+
+    // ── Show result ────────────────────────────────────────────────────────────
+    function showResult(result) {
+      lastResult = result;
+      const card = document.getElementById('result-card');
+      const fields = document.getElementById('result-fields');
+      const rbadge = document.getElementById('result-badge');
+      const verified = result.isValid && result.verificationStatus === 'Verified';
+
+      rbbadgeClass = verified ? 'done' : (result.verificationStatus === 'Error' ? 'error' : '');
+      rbadge.className = 'status-badge ' + rbadgeClass;
+      rbadge.innerHTML = verified
+        ? '<i class="ti ti-check" style="font-size:16px;"></i> Verified'
+        : `<i class="ti ti-alert-circle" style="font-size:16px;"></i> ${result.verificationStatus || 'Unverified'}`;
+
+      const rows = [
+        ['Certificate Type', result.certificateType],
+        ['Recipient Name', result.recipientName],
+        ['Issued By', result.issuer],
+        ['Course / Subject', result.courseOrSubject],
+        ['Issue Date', result.issueDate],
+        ['Expiry Date', result.expiryDate],
+        ['Credential ID', result.credentialId],
+        ['Grade / Score', result.grade],
+        ['Notes', result.notes],
+      ];
+
+      fields.innerHTML = rows
+        .filter(([, v]) => v && v !== 'N/A' && v !== 'Not found' && v !== '—')
+        .map(([k, v]) => `<div class="field-row"><span class="field-label">${k}</span><span class="field-value">${v}</span></div>`)
+        .join('');
+
+      card.style.display = '';
+      setStatus(verified ? 'done' : '', verified ? 'Complete' : 'Done');
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ── Export ─────────────────────────────────────────────────────────────────
+    function downloadResult() {
+      if (!lastResult) return;
+      const lines = [
+        'CERTIFICATE SCAN REPORT',
+        '========================',
+        `Generated : ${new Date().toLocaleString()}`,
+        '',
+        ...Object.entries(lastResult).map(([k, v]) => `${k.padEnd(22)}: ${v}`)
+      ].join('\n');
+      const blob = new Blob([lines], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `certificate_scan_${Date.now()}.txt`;
+      a.click();
+    }
+
+    function copyResult() {
+      if (!lastResult) return;
+      const text = Object.entries(lastResult).map(([k, v]) => `${k}: ${v}`).join('\n');
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
+        setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy"></i> Copy'; }, 2000);
+      });
+    }
+
+    // ── Reset ──────────────────────────────────────────────────────────────────
+    function resetAll() {
+      stopCamera();
+      clearUpload();
+      document.getElementById('result-card').style.display = 'none';
+      setStatus('', 'Idle');
+      switchTab('camera');
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function show(id) { document.getElementById(id).style.display = ''; }
+    function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+    window.addEventListener('load', async () => {
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        try {
+          await navigator.mediaDevices.getUserMedia({ video: true });
+          startCamera();
+        } catch (err) {
+          hintText.textContent = 'Please allow camera permission to use the scanner.';
+          setStatus('error', 'Permission Needed');
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
