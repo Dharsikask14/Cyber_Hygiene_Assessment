@@ -24,18 +24,25 @@
       overflow: hidden;
       height: 100vh;
       margin: 0;
+      display: flex;
+      flex-direction: column;
     }
 
     .container {
-      height: calc(100vh - 64px);
-      overflow-y: auto;
-      padding-bottom: 40px;
+      flex: 1;
+      overflow: hidden;
+      padding-bottom: 20px;
+      display: flex;
+      flex-direction: column;
     }
 
     .scanner-container {
       max-width: 680px;
       margin: 0 auto;
-      padding-top: 24px;
+      padding-top: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     .scanner-header {
@@ -195,7 +202,7 @@
       border-radius: 16px;
       overflow: hidden;
       background: #000;
-      aspect-ratio: 4/3;
+      height: 280px;
       border: 1px solid var(--border-color);
     }
 
@@ -523,7 +530,7 @@
 
     #uploaded-img {
       max-width: 100%;
-      max-height: 400px;
+      max-height: 250px;
       border-radius: 16px;
       border: 1px solid var(--border-color);
       object-fit: contain;
@@ -558,9 +565,6 @@
       <!-- Header -->
       <div class="scanner-header">
         <div class="logo-group">
-          <a href="../index.html" class="back-btn">
-            <i class="ti ti-arrow-left"></i> Back
-          </a>
           <div class="logo-icon"><i class="ti ti-certificate"></i></div>
           <div>
             <div class="logo-title">Certificate Verification</div>
@@ -612,6 +616,9 @@
         </div>
 
         <div class="controls">
+          <a href="../index.html" class="back-btn">
+            <i class="ti ti-arrow-left"></i> Back to Home
+          </a>
           <button class="btn primary" id="start-btn" onclick="startCamera()">
             <i class="ti ti-camera"></i> Start Camera
           </button>
@@ -643,6 +650,9 @@
         <div id="upload-preview">
           <img id="uploaded-img" alt="Uploaded certificate" />
           <div class="controls">
+            <a href="../index.html" class="back-btn">
+              <i class="ti ti-arrow-left"></i> Back
+            </a>
             <button class="btn primary" onclick="analyzeUploaded()">
               <i class="ti ti-scan"></i> Analyze Certificate
             </button>
