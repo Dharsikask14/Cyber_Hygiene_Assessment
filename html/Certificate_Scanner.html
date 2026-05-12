@@ -680,6 +680,9 @@
         <div id="result-fields"></div>
 
         <div class="controls" style="margin-top:20px; justify-content:flex-start;">
+          <button class="btn success" id="secure-verify-btn" onclick="secureDatabaseVerify()">
+            <i class="ti ti-shield-check"></i> Secure Database Verify
+          </button>
           <button class="btn primary" onclick="downloadResult()">
             <i class="ti ti-download"></i> Download Report
           </button>
@@ -1002,6 +1005,39 @@ If a field is not visible, use "Not found". If this is not a certificate image, 
         btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
         setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy"></i> Copy'; }, 2000);
       });
+    }
+
+    async function secureDatabaseVerify() {
+      if (!lastResult || !lastResult.credentialId || !lastResult.recipientName) {
+        alert('Could not find enough info for secure verification. Please try a clearer scan.');
+        return;
+      }
+
+      const btn = document.getElementById('secure-verify-btn');
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="ti ti-loader animate-spin"></i> Verifying...';
+      btn.disabled = true;
+
+      try {
+        const url = `http://127.0.0.1:8000/verify/${encodeURIComponent(lastResult.credentialId)}/?name=${encodeURIComponent(lastResult.recipientName)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.status === 'verified') {
+          alert('✅ ' + data.message);
+          document.getElementById('result-badge').innerHTML = '<i class="ti ti-shield-check"></i> DB Verified';
+          document.getElementById('result-badge').className = 'status-badge done';
+        } else {
+          alert('❌ ' + (data.message || 'Verification Failed'));
+          document.getElementById('result-badge').className = 'status-badge error';
+        }
+      } catch (err) {
+        console.error(err);
+        alert('❌ Error connecting to verification server. Please ensure the Django backend is running.');
+      } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+      }
     }
 
     // ── Reset ──────────────────────────────────────────────────────────────────

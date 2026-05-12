@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify through ID — Hackers InfoTech</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+    <style>
+        body {
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .verify-card {
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus {
+            border-color: var(--primary-color);
+        }
+        .status-box {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 12px;
+            display: none;
+        }
+        .status-box.success {
+            background: var(--grade-ap-bg);
+            color: var(--grade-ap);
+            border: 1px solid var(--grade-ap);
+        }
+        .status-box.error {
+            background: var(--grade-cp-bg);
+            color: var(--grade-cp);
+            border: 1px solid var(--grade-cp);
+        }
+        .back-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="btn back-home">
+        <i class="ti ti-arrow-left"></i> Back to Home
+    </a>
+
+    <div class="container">
+        <div class="card verify-card">
+            <div style="margin-bottom: 30px;">
+                <div style="width: 64px; height: 64px; background: var(--grade-a-bg); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); margin: 0 auto 16px;">
+                    <i class="ti ti-id" style="font-size: 32px;"></i>
+                </div>
+                <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Manual Verification</h2>
+                <p style="color: var(--text-secondary); font-size: 14px;">Enter the details exactly as shown on the certificate.</p>
+            </div>
+
+            <div class="input-group">
+                <label>Certificate ID</label>
+                <input type="text" id="cert-id" placeholder="e.g. CERT-2024-001">
+            </div>
+
+            <div class="input-group">
+                <label>Recipient Full Name</label>
+                <input type="text" id="recipient-name" placeholder="Name as printed on certificate">
+            </div>
+
+            <button class="btn primary" style="width: 100%; padding: 14px; font-size: 15px;" onclick="verifyCertificate()">
+                <i class="ti ti-shield-check"></i> Verify Certificate
+            </button>
+
+            <div id="status-box" class="status-box"></div>
+        </div>
+    </div>
+
+    <script>
+        async function verifyCertificate() {
+            const certId = document.getElementById('cert-id').value.trim();
+            const name = document.getElementById('recipient-name').value.trim();
+            const statusBox = document.getElementById('status-box');
+
+            if (!certId || !name) {
+                alert('Please fill in both fields.');
+                return;
+            }
+
+            statusBox.style.display = 'block';
+            statusBox.className = 'status-box';
+            statusBox.innerHTML = '<i class="ti ti-loader animate-spin"></i> Checking records...';
+
+            try {
+                // Calling the Django backend endpoint
+                const url = `http://127.0.0.1:8000/verify/${encodeURIComponent(certId)}/?name=${encodeURIComponent(name)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (res.ok) {
+                    statusBox.className = 'status-box success';
+                    statusBox.innerHTML = `
+                        <div style="font-weight: 700; margin-bottom: 4px;">✅ Verification Successful</div>
+                        <div style="font-size: 13px; opacity: 0.9;">${data.message}</div>
+                    `;
+                } else {
+                    statusBox.className = 'status-box error';
+                    statusBox.innerHTML = `
+                        <div style="font-weight: 700; margin-bottom: 4px;">❌ Verification Failed</div>
+                        <div style="font-size: 13px; opacity: 0.9;">${data.message || 'Details do not match our secure records.'}</div>
+                    `;
+                }
+            } catch (err) {
+                statusBox.className = 'status-box error';
+                statusBox.innerHTML = `
+                    <div style="font-weight: 700; margin-bottom: 4px;">⚠️ Connection Error</div>
+                    <div style="font-size: 13px; opacity: 0.9;">Could not reach verification server. Ensure the backend is running.</div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
