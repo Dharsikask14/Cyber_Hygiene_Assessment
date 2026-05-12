@@ -848,8 +848,9 @@
           uploadedData = tempCanvas.toDataURL('image/jpeg', 0.92);
           
           document.getElementById('uploaded-img').src = uploadedData;
+          document.getElementById('uploaded-img').style.display = 'block';
           document.getElementById('upload-zone').style.display = 'none';
-          document.getElementById('upload-preview').style.display = '';
+          document.getElementById('upload-preview').style.display = 'block';
           document.getElementById('result-card').style.display = 'none';
           setStatus('', 'PDF Ready');
         } catch (err) {
@@ -862,8 +863,9 @@
         reader.onload = ev => {
           uploadedData = ev.target.result;
           document.getElementById('uploaded-img').src = uploadedData;
+          document.getElementById('uploaded-img').style.display = 'block';
           document.getElementById('upload-zone').style.display = 'none';
-          document.getElementById('upload-preview').style.display = '';
+          document.getElementById('upload-preview').style.display = 'block';
           document.getElementById('result-card').style.display = 'none';
         };
         reader.readAsDataURL(file);
