@@ -93,18 +93,3 @@ A professional, high-performance web application designed to evaluate and improv
 - **Client-Side Storage**: User data is stored in `localStorage` and never sent to a server unless explicit backend verification is configured.
 - **Data Protection**: Designed to educate users on the Digital Personal Data Protection (DPDP) Act 2023.
 
----
-
-## 🏢 About Hackers InfoTech
-
-**Hackers InfoTech** is an ISO 9001:2015 certified cybersecurity company based in Coimbatore, India, providing 360° cyber defense for the digital landscape.
-
-- **Website**: [hackersinfotech.com](https://hackersinfotech.com)
-- **Email**: thehackersinfotech@gmail.com
-- **Services**: Cyber Security Audits, Training, and Managed Security Services.
-
----
-
-## 📝 License
-
-This project is proprietary software belonging to **Hackers InfoTech**. All rights reserved.
