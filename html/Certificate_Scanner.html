@@ -648,15 +648,19 @@
         </div>
         <input type="file" id="file-input" accept="image/*,.pdf" onchange="handleFileUpload(event)" style="display:none;" />
 
-        <div id="upload-preview" style="display:none;">
-          <div style="text-align: center; margin-bottom: 16px;">
+        <div id="upload-preview" class="card" style="display:none; margin-top: 0; text-align: center;">
+          <div style="margin-bottom: 20px;">
             <span class="status-badge done"><i class="ti ti-check"></i> File Ready for Analysis</span>
           </div>
-          <img id="uploaded-img" alt="Uploaded certificate" style="max-height: 400px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 12px;" />
-          <div id="file-details" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; padding: 10px; background: var(--bg-color); border-radius: 8px;">
-             <i class="ti ti-file"></i> <span id="file-name-text">filename.jpg</span> • <span id="file-size-text">0 KB</span>
+          
+          <div style="background: var(--bg-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px dashed var(--border-color);">
+            <img id="uploaded-img" alt="Uploaded certificate" style="max-height: 350px; max-width: 100%; border-radius: 8px; display: none; margin: 0 auto;" />
+            <div id="file-details" style="font-size: 13px; color: var(--text-secondary); margin-top: 12px;">
+               <i class="ti ti-file"></i> <span id="file-name-text">filename.jpg</span> • <span id="file-size-text">0 KB</span>
+            </div>
           </div>
-          <div class="controls" style="margin-top: 10px;">
+
+          <div class="controls">
             <a href="../index.html" class="btn">
               <i class="ti ti-arrow-left"></i> Back to Home
             </a>
@@ -861,6 +865,7 @@
       } else {
         const reader = new FileReader();
         reader.onload = ev => {
+          uploadedData = ev.target.result;
           document.getElementById('uploaded-img').src = uploadedData;
           document.getElementById('uploaded-img').style.display = 'block';
           document.getElementById('upload-zone').style.display = 'none';
