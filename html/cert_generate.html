@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generate Certificate — Hackers InfoTech</title>
+  <meta name="description" content="Admin portal to generate tamper-proof certificates with QR codes." />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="../js/shared.js" defer></script>
+  <!-- QR Code library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .page-body {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 20px;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Generator Card ── */
+    .gen-card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--grade-a-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-color);
+      flex-shrink: 0;
+    }
+
+    .card-icon i { font-size: 28px; }
+
+    .card-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+    .card-sub   { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus { border-color: var(--primary-color); }
+    .field input.error { border-color: #EF4444; background: rgba(239,68,68,0.05); }
+
+    .error-msg {
+      color: #EF4444;
+      font-size: 11px;
+      margin-top: 5px;
+      display: none;
+      font-weight: 500;
+    }
+
+    .btn-gen-uuid {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .btn-gen-uuid:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .btn-generate {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: var(--primary-color);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn-generate:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border-color);
+      margin: 28px 0;
+    }
+
+    /* ── QR Output Panel ── */
+    .output-panel {
+      display: none;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .output-header .badge {
+      background: rgba(34,197,94,0.12);
+      color: #16A34A;
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .qr-wrapper {
+      background: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+    }
+
+    .cert-info-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    .cert-info-table tr + tr td { border-top: 1px solid var(--border-color); }
+
+    .cert-info-table td {
+      padding: 10px 12px;
+    }
+
+    .cert-info-table td:first-child {
+      color: var(--text-secondary);
+      font-weight: 500;
+      width: 120px;
+    }
+
+    .cert-info-table td:last-child {
+      color: var(--text-primary);
+      font-weight: 600;
+      word-break: break-all;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+    }
+
+    .hash-row td:last-child {
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-outline {
+      flex: 1;
+      padding: 11px 16px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-outline:hover { border-color: var(--primary-color); color: var(--primary-color); }
+
+    .btn-danger-outline {
+      flex: 1;
+      padding: 11px 16px;
+      border-radius: 10px;
+      border: 1.5px solid #EF4444;
+      background: rgba(239,68,68,0.05);
+      color: #EF4444;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-danger-outline:hover { background: rgba(239,68,68,0.12); }
+
+    /* ── Certificates Registry Panel ── */
+    .registry-card {
+      width: 100%;
+      max-width: 560px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      animation: slideUp 0.5s ease-out 0.1s both;
+    }
+
+    .registry-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .registry-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .registry-count {
+      background: var(--bg-color);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .registry-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .registry-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .registry-empty i {
+      font-size: 48px;
+      color: var(--border-color);
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .cert-item {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .cert-item:hover { border-color: var(--primary-color); }
+
+    .cert-item-info { flex: 1; min-width: 0; }
+
+    .cert-item-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .cert-item-id {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-family: monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cert-item-date {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .cert-item-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+    .icon-btn.del:hover { border-color: #EF4444; color: #EF4444; }
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <nav>
+    <div class="nav-content">
+      <a href="../index.html" class="nav-brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8" opacity=".15" />
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8" strokeWidth="1.5" />
+          <path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span>Hackers InfoTech</span>
+      </a>
+      <div class="nav-right">
+        <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
+        <span class="nav-city">Coimbatore, India</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-body">
+
+    <!-- ── Generator Card ── -->
+    <div class="gen-card">
+      <div class="card-header">
+        <div class="card-icon"><i class="ti ti-certificate"></i></div>
+        <div>
+          <div class="card-title">Certificate Generator</div>
+          <div class="card-sub">Create tamper-proof certificates with QR verification</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Recipient Full Name</label>
+        <input type="text" id="inp-name" placeholder="e.g. Madhan Kumar" oninput="clearErr('inp-name','err-name')" />
+        <div class="error-msg" id="err-name">Please enter the recipient's name.</div>
+      </div>
+
+      <div class="field">
+        <label>Certificate ID</label>
+        <div class="field-row">
+          <input type="text" id="inp-id" placeholder="e.g. CERT-001 or auto-generate →" oninput="clearErr('inp-id','err-id')" />
+          <button class="btn-gen-uuid" onclick="generateUUID()" title="Generate a UUID-based ID">
+            <i class="ti ti-refresh"></i> UUID
+          </button>
+        </div>
+        <div class="error-msg" id="err-id">Please enter or generate a Certificate ID.</div>
+      </div>
+
+      <button class="btn-generate" onclick="generateCertificate()">
+        <i class="ti ti-qrcode"></i> Generate Certificate & QR Code
+      </button>
+
+      <hr class="divider" />
+
+      <!-- ── Output Panel ── -->
+      <div class="output-panel" id="output-panel">
+        <div class="output-header">
+          <i class="ti ti-check-circle" style="color:#16A34A; font-size:20px;"></i>
+          <span style="font-size:15px; font-weight:700; color:var(--text-primary);">Certificate Created</span>
+          <span class="badge">Secure ✓</span>
+        </div>
+
+        <div class="qr-wrapper">
+          <div id="qr-code"></div>
+        </div>
+
+        <table class="cert-info-table">
+          <tr>
+            <td>Name</td>
+            <td id="out-name">—</td>
+          </tr>
+          <tr>
+            <td>Certificate ID</td>
+            <td id="out-id">—</td>
+          </tr>
+          <tr>
+            <td>Verify URL</td>
+            <td id="out-url" style="word-break:break-all; font-size:10px; color:var(--primary-color);">—</td>
+          </tr>
+          <tr class="hash-row">
+            <td>SHA-256 Hash</td>
+            <td id="out-hash">—</td>
+          </tr>
+        </table>
+
+        <div class="btn-row">
+          <button class="btn-outline" onclick="downloadQR()"><i class="ti ti-download"></i> Download QR</button>
+          <button class="btn-outline" id="copy-url-btn" onclick="copyVerifyUrl()"><i class="ti ti-copy"></i> Copy URL</button>
+          <button class="btn-danger-outline" onclick="resetForm()"><i class="ti ti-refresh"></i> New</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Registry Card ── -->
+    <div class="registry-card">
+      <div class="registry-header">
+        <div class="registry-title"><i class="ti ti-database" style="font-size:18px; vertical-align:-3px;"></i> Certificate Registry</div>
+        <div class="registry-count" id="registry-count">0 records</div>
+      </div>
+      <div class="registry-list" id="registry-list">
+        <div class="registry-empty">
+          <i class="ti ti-certificate-off"></i>
+          No certificates yet. Generate one to get started.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ── Storage key ──────────────────────────────────────────────────────────────
+    const STORE_KEY = 'hi_cert_store_v1';
+
+    // ── SHA-256 via Web Crypto API ───────────────────────────────────────────────
+    async function sha256(message) {
+      const msgBuf = new TextEncoder().encode(message);
+      const hashBuf = await crypto.subtle.digest('SHA-256', msgBuf);
+      const hashArr = Array.from(new Uint8Array(hashBuf));
+      return hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ── UUID generator ───────────────────────────────────────────────────────────
+    function generateUUID() {
+      const id = 'CERT-' + ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+      ).toUpperCase().replace(/-/g,'').slice(0, 8);
+      document.getElementById('inp-id').value = id;
+      clearErr('inp-id', 'err-id');
+    }
+
+    // ── Validation helpers ───────────────────────────────────────────────────────
+    function clearErr(inputId, errId) {
+      document.getElementById(inputId).classList.remove('error');
+      document.getElementById(errId).style.display = 'none';
+    }
+
+    function showErr(inputId, errId) {
+      document.getElementById(inputId).classList.add('error');
+      document.getElementById(errId).style.display = 'block';
+    }
+
+    // ── LocalStorage helpers ─────────────────────────────────────────────────────
+    function loadStore() {
+      try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); }
+      catch { return {}; }
+    }
+
+    function saveStore(store) {
+      localStorage.setItem(STORE_KEY, JSON.stringify(store));
+    }
+
+    // ── Main: Generate Certificate ───────────────────────────────────────────────
+    let lastVerifyUrl = '';
+
+    async function generateCertificate() {
+      const name   = document.getElementById('inp-name').value.trim();
+      const certId = document.getElementById('inp-id').value.trim();
+
+      let hasError = false;
+      if (!name)   { showErr('inp-name', 'err-name'); hasError = true; }
+      if (!certId) { showErr('inp-id',   'err-id');   hasError = true; }
+      if (hasError) return;
+
+      // 1. Build the combined string
+      const combined = `${name}|${certId}`;
+
+      // 2. SHA-256 hash
+      const hash = await sha256(combined);
+
+      // 3. Build verify URL
+      const verifyUrl = `${location.origin}/html/cert_verify.html?id=${encodeURIComponent(certId)}&name=${encodeURIComponent(name)}`;
+      lastVerifyUrl = verifyUrl;
+
+      // 4. Store in localStorage (simulated DB: only id + hash)
+      const store = loadStore();
+      store[certId] = {
+        hash,
+        createdAt: new Date().toISOString(),
+        name  // stored only for registry display purposes
+      };
+      saveStore(store);
+
+      // 5. Render QR code
+      const qrDiv = document.getElementById('qr-code');
+      qrDiv.innerHTML = '';
+      new QRCode(qrDiv, {
+        text: verifyUrl,
+        width: 200,
+        height: 200,
+        colorDark: '#0F172A',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      // 6. Fill output table
+      document.getElementById('out-name').textContent = name;
+      document.getElementById('out-id').textContent   = certId;
+      document.getElementById('out-url').textContent  = verifyUrl;
+      document.getElementById('out-hash').textContent = hash;
+
+      // 7. Show output panel
+      document.getElementById('output-panel').style.display = 'block';
+      document.getElementById('output-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // 8. Refresh registry
+      renderRegistry();
+    }
+
+    // ── Download QR ──────────────────────────────────────────────────────────────
+    function downloadQR() {
+      const img = document.querySelector('#qr-code img') || document.querySelector('#qr-code canvas');
+      if (!img) return;
+      const link = document.createElement('a');
+      if (img.tagName === 'IMG') {
+        link.href = img.src;
+      } else {
+        link.href = img.toDataURL('image/png');
+      }
+      link.download = `certificate_qr_${document.getElementById('out-id').textContent}.png`;
+      link.click();
+    }
+
+    // ── Copy verify URL ──────────────────────────────────────────────────────────
+    function copyVerifyUrl() {
+      navigator.clipboard.writeText(lastVerifyUrl).then(() => {
+        const btn = document.getElementById('copy-url-btn');
+        btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
+        setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy"></i> Copy URL'; }, 2000);
+      });
+    }
+
+    // ── Reset form ───────────────────────────────────────────────────────────────
+    function resetForm() {
+      document.getElementById('inp-name').value = '';
+      document.getElementById('inp-id').value   = '';
+      document.getElementById('output-panel').style.display = 'none';
+      document.getElementById('qr-code').innerHTML = '';
+    }
+
+    // ── Delete cert from store ───────────────────────────────────────────────────
+    function deleteCert(certId) {
+      if (!confirm(`Revoke certificate "${certId}"? This cannot be undone.`)) return;
+      const store = loadStore();
+      delete store[certId];
+      saveStore(store);
+      renderRegistry();
+    }
+
+    // ── Copy verify link from registry ──────────────────────────────────────────
+    function copyLink(certId, name) {
+      const url = `${location.origin}/html/cert_verify.html?id=${encodeURIComponent(certId)}&name=${encodeURIComponent(name)}`;
+      navigator.clipboard.writeText(url);
+    }
+
+    // ── Render registry ──────────────────────────────────────────────────────────
+    function renderRegistry() {
+      const store   = loadStore();
+      const entries = Object.entries(store).reverse();
+      const list    = document.getElementById('registry-list');
+      const count   = document.getElementById('registry-count');
+
+      count.textContent = `${entries.length} record${entries.length !== 1 ? 's' : ''}`;
+
+      if (entries.length === 0) {
+        list.innerHTML = `<div class="registry-empty">
+          <i class="ti ti-certificate-off"></i>
+          No certificates yet. Generate one to get started.
+        </div>`;
+        return;
+      }
+
+      list.innerHTML = entries.map(([id, val]) => {
+        const date = val.createdAt ? new Date(val.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+        return `<div class="cert-item">
+          <div class="cert-item-info">
+            <div class="cert-item-name">${escHtml(val.name || '—')}</div>
+            <div class="cert-item-id">${escHtml(id)}</div>
+            <div class="cert-item-date"><i class="ti ti-clock" style="font-size:11px;"></i> ${date}</div>
+          </div>
+          <div class="cert-item-actions">
+            <button class="icon-btn" title="Copy verify link" onclick="copyLink('${escHtml(id)}','${escHtml(val.name||'')}')">
+              <i class="ti ti-link"></i>
+            </button>
+            <button class="icon-btn del" title="Revoke certificate" onclick="deleteCert('${escHtml(id)}')">
+              <i class="ti ti-trash"></i>
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────────────
+    renderRegistry();
+  </script>
+</body>
+</html>

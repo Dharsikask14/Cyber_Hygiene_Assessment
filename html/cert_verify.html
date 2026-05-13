@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certificate Verification — Hackers InfoTech</title>
+  <meta name="description" content="Verify the authenticity of a Hackers InfoTech certificate using SHA-256 hash verification." />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
+  <script src="../js/shared.js" defer></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .page-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 20px;
+    }
+
+    .verify-card {
+      width: 100%;
+      max-width: 500px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 44px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+      animation: popIn 0.5s cubic-bezier(.175,.885,.32,1.275);
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.93) translateY(16px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* ── States ── */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* ── Loading ── */
+    .loader-center {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .spinner-lg {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 4px solid var(--border-color);
+      border-top-color: var(--primary-color);
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loader-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .loader-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* ── Result: Verified ── */
+    .result-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 40px;
+    }
+
+    .result-icon.ok  { background: rgba(34,197,94,0.12); color: #16A34A; }
+    .result-icon.fail { background: rgba(239,68,68,0.1); color: #EF4444; }
+    .result-icon.warn { background: rgba(245,158,11,0.1); color: #D97706; }
+
+    .result-title {
+      font-size: 22px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .result-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: var(--bg-color);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
+    }
+
+    .detail-table tr + tr td { border-top: 1px solid var(--border-color); }
+
+    .detail-table td {
+      padding: 11px 16px;
+    }
+
+    .detail-table td:first-child {
+      color: var(--text-secondary);
+      font-weight: 600;
+      width: 130px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-table td:last-child {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .hash-display {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      word-break: break-all;
+      color: var(--text-secondary);
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 24px;
+      line-height: 1.8;
+    }
+
+    .hash-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .hash-match-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .hash-match-badge.ok   { background: rgba(34,197,94,0.12); color: #16A34A; border: 1px solid rgba(34,197,94,0.3); }
+    .hash-match-badge.fail { background: rgba(239,68,68,0.1);  color: #EF4444; border: 1px solid rgba(239,68,68,0.3); }
+
+    .alert-box {
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .alert-box.ok   { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); color: #166534; }
+    .alert-box.fail { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.25); color: #991B1B; }
+    .alert-box.warn { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); color: #92400E; }
+
+    .alert-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    .btn-home {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-home:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    /* ── Error / Not Found ── */
+    .error-section {
+      text-align: center;
+    }
+
+    /* ── Verified timestamp ── */
+    .timestamp {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      padding-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <nav>
+    <div class="nav-content">
+      <a href="../index.html" class="nav-brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8" opacity=".15" />
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8" strokeWidth="1.5" />
+          <path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span>Hackers InfoTech</span>
+      </a>
+      <div class="nav-right">
+        <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
+        <span class="nav-city">Coimbatore, India</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-body">
+    <div class="verify-card">
+
+      <!-- STATE: Loading -->
+      <div class="state active" id="state-loading">
+        <div class="loader-center">
+          <div class="spinner-lg"></div>
+          <div class="loader-text">Verifying Certificate…</div>
+          <div class="loader-sub">Computing SHA-256 hash and checking registry</div>
+        </div>
+      </div>
+
+      <!-- STATE: Verified ✓ -->
+      <div class="state" id="state-verified">
+        <div class="result-icon ok"><i class="ti ti-shield-check"></i></div>
+        <div class="result-title" style="color:#16A34A;">Certificate Verified Successfully</div>
+        <div class="result-subtitle">This certificate is authentic and has not been tampered with.</div>
+
+        <div class="alert-box ok">
+          <i class="ti ti-circle-check"></i>
+          <span>The SHA-256 hash of this certificate matches our secure registry. The data is intact.</span>
+        </div>
+
+        <table class="detail-table">
+          <tr>
+            <td>Recipient</td>
+            <td id="v-name">—</td>
+          </tr>
+          <tr>
+            <td>Certificate ID</td>
+            <td id="v-id" style="font-family:monospace; font-size:12px;">—</td>
+          </tr>
+          <tr>
+            <td>Hash Match</td>
+            <td><span class="hash-match-badge ok"><i class="ti ti-check"></i> Match</span></td>
+          </tr>
+        </table>
+
+        <div class="hash-label">Verified SHA-256 Hash</div>
+        <div class="hash-display" id="v-hash">—</div>
+
+        <div class="timestamp" id="v-time">—</div>
+
+        <a href="../index.html" class="btn-home"><i class="ti ti-home"></i> Back to Home</a>
+      </div>
+
+      <!-- STATE: Tampered / Invalid ✗ -->
+      <div class="state" id="state-tampered">
+        <div class="result-icon fail"><i class="ti ti-shield-x"></i></div>
+        <div class="result-title" style="color:#EF4444;">Certificate Tampered or Invalid</div>
+        <div class="result-subtitle">The certificate data does not match our secure records.</div>
+
+        <div class="alert-box fail">
+          <i class="ti ti-alert-triangle"></i>
+          <span><strong>Hash mismatch detected.</strong> The name or certificate ID may have been modified. This certificate cannot be trusted.</span>
+        </div>
+
+        <table class="detail-table">
+          <tr>
+            <td>Claimed Name</td>
+            <td id="t-name">—</td>
+          </tr>
+          <tr>
+            <td>Certificate ID</td>
+            <td id="t-id" style="font-family:monospace; font-size:12px;">—</td>
+          </tr>
+          <tr>
+            <td>Hash Match</td>
+            <td><span class="hash-match-badge fail"><i class="ti ti-x"></i> Mismatch</span></td>
+          </tr>
+        </table>
+
+        <div class="hash-label">Computed Hash (does not match registry)</div>
+        <div class="hash-display" id="t-hash">—</div>
+
+        <a href="../index.html" class="btn-home" style="margin-top: 8px;"><i class="ti ti-home"></i> Back to Home</a>
+      </div>
+
+      <!-- STATE: Not Found -->
+      <div class="state" id="state-notfound">
+        <div class="error-section">
+          <div class="result-icon warn"><i class="ti ti-help-circle"></i></div>
+          <div class="result-title" style="color:var(--text-primary);">Certificate Not Found</div>
+          <div class="result-subtitle">No record matches this Certificate ID in our registry.</div>
+
+          <div class="alert-box warn">
+            <i class="ti ti-info-circle"></i>
+            <span>This certificate may not have been issued by Hackers InfoTech, or the QR code may be damaged.</span>
+          </div>
+
+          <a href="../index.html" class="btn-home"><i class="ti ti-home"></i> Back to Home</a>
+        </div>
+      </div>
+
+      <!-- STATE: Bad URL (missing params) -->
+      <div class="state" id="state-badurl">
+        <div class="error-section">
+          <div class="result-icon warn"><i class="ti ti-link-off"></i></div>
+          <div class="result-title" style="color:var(--text-primary);">Invalid Verification Link</div>
+          <div class="result-subtitle">This verification URL is missing required parameters. Please scan the QR code on the original certificate.</div>
+          <a href="../index.html" class="btn-home"><i class="ti ti-home"></i> Back to Home</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ── Storage key (must match cert_generate.html) ──────────────────────────────
+    const STORE_KEY = 'hi_cert_store_v1';
+
+    // ── SHA-256 ──────────────────────────────────────────────────────────────────
+    async function sha256(message) {
+      const msgBuf = new TextEncoder().encode(message);
+      const hashBuf = await crypto.subtle.digest('SHA-256', msgBuf);
+      return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ── State manager ────────────────────────────────────────────────────────────
+    function showState(id) {
+      document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // ── Load registry ────────────────────────────────────────────────────────────
+    function loadStore() {
+      try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); }
+      catch { return {}; }
+    }
+
+    // ── Main verification flow ────────────────────────────────────────────────────
+    async function verifyCertificate() {
+      const params = new URLSearchParams(window.location.search);
+      const certId = params.get('id');
+      const name   = params.get('name');
+
+      // Validate URL params
+      if (!certId || !name) {
+        setTimeout(() => showState('state-badurl'), 600);
+        return;
+      }
+
+      // Give the spinner time to breathe
+      await new Promise(r => setTimeout(r, 900));
+
+      // 1. Load registry
+      const store  = loadStore();
+      const record = store[certId];
+
+      // 2. Certificate not found in registry
+      if (!record) {
+        showState('state-notfound');
+        return;
+      }
+
+      // 3. Recreate the combined string and compute hash
+      const combined     = `${name}|${certId}`;
+      const computedHash = await sha256(combined);
+      const storedHash   = record.hash;
+
+      // 4. Compare hashes
+      if (computedHash === storedHash) {
+        // ── Verified ──
+        document.getElementById('v-name').textContent = name;
+        document.getElementById('v-id').textContent   = certId;
+        document.getElementById('v-hash').textContent = computedHash;
+        document.getElementById('v-time').textContent =
+          'Verified on ' + new Date().toLocaleString('en-IN', {
+            weekday: 'short', day: '2-digit', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          });
+        showState('state-verified');
+      } else {
+        // ── Tampered ──
+        document.getElementById('t-name').textContent = name;
+        document.getElementById('t-id').textContent   = certId;
+        document.getElementById('t-hash').textContent = computedHash;
+        showState('state-tampered');
+      }
+    }
+
+    // ── Run ──────────────────────────────────────────────────────────────────────
+    verifyCertificate();
+  </script>
+</body>
+</html>
