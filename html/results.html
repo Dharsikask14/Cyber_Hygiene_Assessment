@@ -11,6 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="../js/shared.js" defer></script>
 </head>
 <body>
@@ -74,6 +75,15 @@
 
         <div class="card" style="margin-bottom:20px;">
           <h3 style="font-size:15px; font-weight:600; margin:0 0 16px;">📄 Your Certificate & Report</h3>
+          <div style="background:var(--bg-color); border:1px dashed var(--border-color); border-radius:12px; padding:16px; margin-bottom:14px; display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+            <div id="cert-qr-code" style="background:#fff; padding:10px; border-radius:10px; flex-shrink:0;"></div>
+            <div style="flex:1; min-width:180px;">
+              <div style="font-size:11px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Certificate ID</div>
+              <div id="cert-id-display" style="font-family:monospace; font-size:13px; font-weight:700; color:var(--primary-color); word-break:break-all; margin-bottom:8px;">—</div>
+              <div style="font-size:12px; color:var(--text-secondary); line-height:1.6;">Scan the QR code to verify this certificate's authenticity instantly.</div>
+              <button onclick="copyCertLink()" id="copy-cert-btn" style="margin-top:8px; background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; color:var(--text-primary);">🔗 Copy Verify Link</button>
+            </div>
+          </div>
           <div class="grid-2" style="margin-bottom:14px;">
             <button onclick="dlPDF('cert')" id="btnCert" style="background:#F5F3FF; border:1px solid #DDD6FE; border-radius:10px; padding:12px; font-size:13px; font-weight:600; color:#7C3AED; cursor:pointer;">🏅 Download Certificate</button>
             <button onclick="dlPDF('report')" id="btnReport" style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:12px; font-size:13px; font-weight:600; color:#1D4ED8; cursor:pointer;">📋 Download Full Report</button>
@@ -133,6 +143,33 @@
 
       document.getElementById('resultsContainer').innerHTML = html;
 
+      // ── Render QR code & fill cert info ──────────────────────────────────────
+      const certId   = lead.certId || '';
+      const verifyUrl = certId
+        ? `${location.origin}/html/cert_verify.html?id=${encodeURIComponent(certId)}&name=${encodeURIComponent(lead.name)}`
+        : '';
+
+      document.getElementById('cert-id-display').textContent = certId || 'Not available';
+
+      if (certId) {
+        new QRCode(document.getElementById('cert-qr-code'), {
+          text: verifyUrl,
+          width: 100,
+          height: 100,
+          colorDark: '#0F172A',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      }
+
+      window.copyCertLink = () => {
+        if (!verifyUrl) return;
+        navigator.clipboard.writeText(verifyUrl);
+        const btn = document.getElementById('copy-cert-btn');
+        btn.innerHTML = '✅ Copied!';
+        setTimeout(() => { btn.innerHTML = '🔗 Copy Verify Link'; }, 2000);
+      };
+
       // Prepare hidden cert
       document.getElementById('pdf-cert').innerHTML = `
         <div style="border:2px solid #0EA5E9; border-radius:20px; padding:50px 40px; text-align:center; color:#fff; max-width:700px; margin:0 auto; font-family:'DM Sans', sans-serif;">
@@ -146,7 +183,12 @@
           <div style="font-size:96px; font-weight:700; color:${G.color}; line-height:1; font-family:'DM Mono', monospace;">${G.grade}</div>
           <div style="font-size:20px; font-weight:600; color:#F0F9FF; margin:8px 0 4px;">${G.label}</div>
           <div style="font-size:22px; color:${G.color}; font-weight:700; margin-bottom:4px;">${pct}% (${score}/${mx} pts)</div>
-          <div style="color:#475569; font-size:12px; margin-bottom:32px;">Assessed on ${date}</div>
+          <div style="color:#475569; font-size:12px; margin-bottom:24px;">Assessed on ${date}</div>
+          <div style="background:#0A1628; border:1px solid #1E3050; border-radius:12px; padding:16px; margin-bottom:24px; font-size:11px;">
+            <div style="color:#94A3B8; margin-bottom:6px; letter-spacing:.05em; text-transform:uppercase;">Certificate ID &amp; Verify QR</div>
+            <div style="color:#38BDF8; font-family:monospace; font-size:12px; font-weight:700; margin-bottom:10px;">${lead.certId || '—'}</div>
+            <div style="color:#64748B; font-size:10px; word-break:break-all;">Verify at: ${location.origin}/html/cert_verify.html?id=${encodeURIComponent(lead.certId||'')}&name=${encodeURIComponent(lead.name)}</div>
+          </div>
           <div style="border-top:1px solid #1E3050; padding-top:18px; display:flex; justify-content:space-between; font-size:11px; color:#475569;">
             <span>${BRAND.url}</span><span>${BRAND.email}</span><span>${BRAND.city}</span>
           </div>
