@@ -130,6 +130,9 @@
         </div>
     </nav>
     <div class="container fade-in">
+        <div id="db-warning" style="display:none; background:var(--grade-cp-bg); color:var(--grade-cp); padding:12px; border-radius:10px; border:1px solid var(--grade-cp); margin-bottom:16px; font-size:13px; text-align:center; width:100%; max-width:450px;">
+            <i class="ti ti-alert-triangle"></i> Database Server is Offline. Verification may not work.
+        </div>
         <div class="card verify-card">
             <div style="margin-bottom: 30px;">
                 <div style="width: 64px; height: 64px; background: var(--grade-a-bg); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); margin: 0 auto 16px;">
@@ -230,6 +233,16 @@
                 `;
             }
         }
+
+        async function checkDB() {
+            try {
+                const res = await fetch('http://127.0.0.1:8000/health/');
+                if (!res.ok) throw new Error();
+            } catch (e) {
+                document.getElementById('db-warning').style.display = 'block';
+            }
+        }
+        checkDB();
     </script>
 </body>
 </html>

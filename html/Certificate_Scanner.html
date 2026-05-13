@@ -239,12 +239,12 @@
     }
 
     .cam-placeholder i {
-      font-size: 48px;
+      font-size: 64px;
       color: var(--border-color);
     }
 
     .cam-placeholder p {
-      font-size: 14px;
+      font-size: 16px;
       text-align: center;
       padding: 0 1rem;
       color: var(--text-secondary);
@@ -462,20 +462,20 @@
     }
 
     .upload-zone i {
-      font-size: 48px;
+      font-size: 64px;
       color: var(--text-secondary);
       margin-bottom: 12px;
     }
 
     .upload-zone h3 {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       color: var(--text-primary);
       margin-bottom: 4px;
     }
 
     .upload-zone p {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-secondary);
     }
 
@@ -564,6 +564,9 @@
     <div class="scanner-container">
 
       <!-- Header -->
+      <div id="db-warning" style="display:none; background:var(--grade-cp-bg); color:var(--grade-cp); padding:12px; border-radius:10px; border:1px solid var(--grade-cp); margin-bottom:16px; font-size:13px; text-align:center;">
+        <i class="ti ti-alert-triangle"></i> Database Server is Offline. Verification may not work.
+      </div>
       <div class="scanner-header">
         <div class="logo-group">
           <div class="logo-icon"><i class="ti ti-certificate"></i></div>
@@ -893,6 +896,7 @@
       document.getElementById('result-card').style.display = 'none';
       uploadedData = null;
       setStatus('', 'Idle');
+      document.querySelector('.controls').style.display = 'flex';
     }
 
     function analyzeUploaded() {
@@ -903,6 +907,8 @@
       analyzeBtn.style.opacity = '0.5';
       analyzeBtn.style.cursor = 'not-allowed';
 
+      // Hide only buttons, keep preview info
+      document.querySelector('.controls').style.display = 'none';
       uploadProc.style.display = 'flex';
       setStatus('active', 'Analyzing');
       analyzeCertificate(uploadedData, 'upload');
@@ -1087,6 +1093,16 @@ If a field is not visible, use "Not found". If this is not a certificate image, 
         }
       }
     });
+    // ── DB Check ──────────────────────────────────────────────────────────────
+    async function checkDB() {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/health/'); // Assuming a health endpoint
+        if (!res.ok) throw new Error();
+      } catch (e) {
+        document.getElementById('db-warning').style.display = 'block';
+      }
+    }
+    checkDB();
   </script>
 </body>
 
