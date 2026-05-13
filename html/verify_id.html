@@ -173,6 +173,7 @@
         }
 
         async function verifyCertificate() {
+            await checkDB();
             const idInput = document.getElementById('cert-id');
             const nameInput = document.getElementById('recipient-name');
             const idError = document.getElementById('id-error');
@@ -242,7 +243,7 @@
                 document.getElementById('db-warning').style.display = 'block';
             }
         }
-        checkDB();
+        // checkDB(); // Removed auto-run
     </script>
 </body>
 </html>

@@ -202,7 +202,7 @@
       border-radius: 16px;
       overflow: hidden;
       background: #000;
-      height: 280px;
+      height: 400px;
       border: 1px solid var(--border-color);
     }
 
@@ -657,7 +657,7 @@
           </div>
           
           <div style="background: var(--bg-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px dashed var(--border-color);">
-            <img id="uploaded-img" alt="Uploaded certificate" style="max-height: 350px; max-width: 100%; border-radius: 8px; display: none; margin: 0 auto;" />
+            <img id="uploaded-img" alt="Uploaded certificate" style="max-height: 280px; max-width: 100%; border-radius: 8px; display: none; margin: 0 auto;" />
             <div id="file-details" style="font-size: 13px; color: var(--text-secondary); margin-top: 12px;">
                <i class="ti ti-file"></i> <span id="file-name-text">filename.jpg</span> • <span id="file-size-text">0 KB</span>
             </div>
@@ -752,6 +752,7 @@
 
     // ── Camera ─────────────────────────────────────────────────────────────────
     async function startCamera() {
+      await checkDB();
       try {
         if (stream) stopCamera();
         const constraints = {
@@ -899,8 +900,9 @@
       document.querySelector('.controls').style.display = 'flex';
     }
 
-    function analyzeUploaded() {
+    async function analyzeUploaded() {
       if (!uploadedData) return;
+      await checkDB();
       
       const analyzeBtn = document.getElementById('upload-analyze-btn');
       analyzeBtn.disabled = true;
@@ -1102,7 +1104,7 @@ If a field is not visible, use "Not found". If this is not a certificate image, 
         document.getElementById('db-warning').style.display = 'block';
       }
     }
-    checkDB();
+    // checkDB(); // Removed auto-run
   </script>
 </body>
 
