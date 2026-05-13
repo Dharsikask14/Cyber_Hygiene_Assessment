@@ -67,32 +67,46 @@
           5 minutes · 100% free · Certificate + PDF report included
         </div>
 
-        <div class="grid-2" style="margin-top:20px;">
+        <div class="grid-2" style="margin-top:20px; align-items:stretch;">
           <!-- Verify Certificate Card -->
-          <div class="card floating" style="text-align: left; padding: 16px 20px; width: 100%;">
-            <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 6px;">Verify a Certificate</h3>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Did someone share a Hackers
-              InfoTech certificate with you? Verify its authenticity here.</p>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              <a href="html/verify_id.html" class="btn-primary" style="width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; text-decoration: none; text-align: center; display: block;">Verify through ID</a>
-              <a href="html/Certificate_Scanner.html" class="btn-primary" style="width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; text-decoration: none; text-align: center; display: block; background: var(--grade-a); color: #fff; border: none;">Verify through Scanner(camera)</a>
-              <a href="html/cert_generate.html" class="btn-primary" style="width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; text-decoration: none; text-align: center; display: block; background: #7C3AED; color: #fff; border: none;"><span style="font-size:13px;">⚙️</span> Generate Certificate (Admin)</a>
+          <div class="card floating" style="text-align: left; padding: 20px 22px; width: 100%; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+              <div style="width:36px; height:36px; background:var(--grade-a-bg); border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8" opacity=".2"/><path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8" strokeWidth="1.5"/><path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+              <h3 style="font-size: 15px; font-weight: 700; margin:0;">Verify a Certificate</h3>
+            </div>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height:1.6;">Did someone share a Hackers InfoTech certificate with you? Verify its authenticity instantly using the Certificate ID or by scanning it with your camera.</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top:auto;">
+              <a href="html/verify_id.html" class="btn-primary" style="width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; text-decoration: none; text-align: center; display: block;">🔍 Verify through ID</a>
+              <a href="html/Certificate_Scanner.html" class="btn-primary" style="width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; text-decoration: none; text-align: center; display: block; background: var(--grade-a); color: #fff; border: none;">📷 Verify through Scanner (Camera)</a>
             </div>
           </div>
 
-          <!-- DPDP Act Notice -->
-          <div class="card floating"
-            style="display:flex; gap:12px; align-items:flex-start; background: var(--warning-bg); border-color: var(--warning-border); width: 100%; text-align:left; animation-delay: 0.2s;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;">
-              <path d="M12 2L2 20h20L12 2z" fill="#F59E0B" opacity=".2" />
-              <path d="M12 2L2 20h20L12 2z" stroke="#F59E0B" strokeWidth="1.5" />
-              <path d="M12 9v5M12 16v1" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <div>
-              <div style="font-weight:600; font-size:13px; color:var(--warning-title); margin-bottom:3px;">DPDP Act 2023
-                Compliance</div>
-              <div style="font-size:12px; color:var(--warning-text); line-height:1.6;">Every business storing customer
-                data in India is legally required to comply with the DPDP Act 2023. This assessment helps identify gaps.</div>
+          <!-- DPDP Act Notice — Elaborated -->
+          <div class="card floating" style="background: var(--warning-bg); border-color: var(--warning-border); width: 100%; text-align:left; animation-delay: 0.2s; padding: 20px 22px; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+              <div style="width:36px; height:36px; background:rgba(245,158,11,0.15); border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 20h20L12 2z" fill="#F59E0B" opacity=".25"/><path d="M12 2L2 20h20L12 2z" stroke="#F59E0B" strokeWidth="1.5"/><path d="M12 9v5M12 16v1" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </div>
+              <div style="font-weight:700; font-size:15px; color:var(--warning-title);">DPDP Act 2023 Compliance</div>
+            </div>
+            <div style="font-size:12px; color:var(--warning-text); line-height:1.7; margin-bottom:12px;">
+              India's <strong>Digital Personal Data Protection (DPDP) Act 2023</strong> mandates that every organization collecting or storing personal data of Indian citizens must implement strict data protection controls — regardless of business size or sector.
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:auto;">
+              <div style="display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--warning-text); line-height:1.5;">
+                <span style="color:#F59E0B; font-size:13px; flex-shrink:0; margin-top:1px;">⚠</span>
+                <span>Non-compliance can attract penalties <strong>up to ₹250 crore</strong> per violation</span>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--warning-text); line-height:1.5;">
+                <span style="color:#F59E0B; font-size:13px; flex-shrink:0; margin-top:1px;">⚠</span>
+                <span>Mandatory <strong>Data Fiduciary</strong> responsibilities for businesses storing customer data</span>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--warning-text); line-height:1.5;">
+                <span style="color:#2ECC71; font-size:13px; flex-shrink:0; margin-top:1px;">✓</span>
+                <span>This free assessment <strong>identifies your compliance gaps</strong> in minutes</span>
+              </div>
             </div>
           </div>
         </div>
