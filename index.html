@@ -1,132 +1,25 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cyber Hygiene Assessment — Hackers InfoTech</title>
-  <meta name="description" content="Free Cyber Hygiene Assessment by Hackers InfoTech, Coimbatore" />
-
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&family=Dancing+Script:wght@600;700&display=swap"
-    rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
-  <script src="js/shared.js" defer></script>
-</head>
-
-<body>
-  <!-- NAV -->
-  <nav>
-    <div class="nav-content">
-      <a href="index.html" class="nav-brand">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8"
-            opacity=".15" />
-          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8"
-            strokeWidth="1.5" />
-          <path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span>Hackers InfoTech</span>
-      </a>
-      <div class="nav-right">
-        <button id="themeToggle" class="theme-toggle-btn">🌙 Dark Mode</button>
-        <span class="nav-city">Coimbatore, India</span>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container fade-in" style="position: relative; z-index: 1;">
-    <!-- DECORATIVE BACKGROUND BLOBS -->
-    <div style="position:absolute; top:-100px; left:-150px; width:450px; height:450px; background:var(--primary-color); filter:blur(140px); opacity:0.12; border-radius:50%; z-index:-1; pointer-events:none;"></div>
-    <div style="position:absolute; top:250px; right:-200px; width:400px; height:400px; background:#8B5CF6; filter:blur(140px); opacity:0.1; border-radius:50%; z-index:-1; pointer-events:none;"></div>
-
-    <!-- HOME SECTION -->
-    <div class="hero-grid" style="padding: 56px 0 40px;">
-
-      <!-- Left Content -->
-      <div style="text-align:left;">
-        <div class="floating"
-          style="display:inline-flex; align-items:center; gap:6px; background:var(--card-bg); border:1px solid var(--border-color); border-radius:20px; padding:6px 16px; font-size:12px; color:var(--text-primary); font-weight:600; margin-bottom:24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-          <span
-            style="width:8px; height:8px; border-radius:50%; background:var(--primary-color); display:inline-block; box-shadow: 0 0 8px var(--primary-color);"></span>Free
-          Cyber Hygiene Assessment
-        </div>
-
-        <h1 style="font-size:54px; font-weight:700; line-height:1.1; margin:0 0 16px; letter-spacing:-1px;">
-          How safe are you<br /><span class="text-gradient">online?</span>
-        </h1>
-
-        <p style="font-size:16px; color:var(--text-secondary); max-width:480px; margin:0 0 36px; line-height:1.7;">
-          Our assessment works on all devices, so you only have to set it up once, and get beautiful results forever.
-        </p>
-
-        <div class="hero-buttons">
-          <a href="html/type.html" class="btn-primary floating">Start Assessment →</a>
-        </div>
-
-        <div style="margin-top:16px; font-size:13px; color:var(--text-secondary); margin-bottom: 32px; font-weight: 500;">
-          5 minutes · 100% free · Certificate + PDF report included
-        </div>
-
-        <div class="grid-2" style="margin-top:20px; align-items:stretch;">
-          <!-- Verify Certificate Card -->
-          <div class="card floating" style="text-align: left; padding: 20px 22px; width: 100%; display:flex; flex-direction:column;">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-              <div style="width:36px; height:36px; background:var(--grade-a-bg); border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#38BDF8" opacity=".2"/><path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#38BDF8" strokeWidth="1.5"/><path d="M9 12l2 2 4-4" stroke="#38BDF8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3 style="font-size: 15px; font-weight: 700; margin:0;">Verify a Certificate</h3>
-            </div>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height:1.6;">Did someone share a Hackers InfoTech certificate with you? Verify its authenticity instantly using the Certificate ID or by scanning it with your camera.</p>
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top:auto;">
-              <a href="html/verify_id.html" class="btn-primary" style="width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; text-decoration: none; text-align: center; display: block;">🔍 Verify through ID</a>
-              <a href="html/Certificate_Scanner.html" class="btn-primary" style="width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; text-decoration: none; text-align: center; display: block; background: var(--grade-a); color: #fff; border: none;">📷 Verify through Scanner (Camera)</a>
-            </div>
-          </div>
-
-          <!-- DPDP Act Notice — Elaborated -->
-          <div class="card floating" style="background: var(--warning-bg); border-color: var(--warning-border); width: 100%; text-align:left; animation-delay: 0.2s; padding: 20px 22px; display:flex; flex-direction:column;">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-              <div style="width:36px; height:36px; background:rgba(245,158,11,0.15); border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 20h20L12 2z" fill="#F59E0B" opacity=".25"/><path d="M12 2L2 20h20L12 2z" stroke="#F59E0B" strokeWidth="1.5"/><path d="M12 9v5M12 16v1" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              </div>
-              <div style="font-weight:700; font-size:15px; color:var(--warning-title);">DPDP Act 2023 Compliance</div>
-            </div>
-            <div style="font-size:12px; color:var(--warning-text); line-height:1.7; margin-bottom:12px;">
-              India's <strong>Digital Personal Data Protection (DPDP) Act 2023</strong> mandates that every organization collecting or storing personal data of Indian citizens must implement strict data protection controls — regardless of business size or sector.
-            </div>
-            <div style="display:flex; flex-direction:column; gap:6px; margin-top:auto;">
-              <div style="display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--warning-text); line-height:1.5;">
-                <span style="color:#F59E0B; font-size:13px; flex-shrink:0; margin-top:1px;">⚠</span>
-                <span>Non-compliance can attract penalties <strong>up to ₹250 crore</strong> per violation</span>
-              </div>
-              <div style="display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--warning-text); line-height:1.5;">
-                <span style="color:#F59E0B; font-size:13px; flex-shrink:0; margin-top:1px;">⚠</span>
-                <span>Mandatory <strong>Data Fiduciary</strong> responsibilities for businesses storing customer data</span>
-              </div>
-              <div style="display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--warning-text); line-height:1.5;">
-                <span style="color:#2ECC71; font-size:13px; flex-shrink:0; margin-top:1px;">✓</span>
-                <span>This free assessment <strong>identifies your compliance gaps</strong> in minutes</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Right Content: Logo Graphic -->
-      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; position: relative; padding: 40px;">
-        <!-- Abstract Shapes Simulation -->
-        <div style="position: absolute; width: 500px; height: 500px; background: var(--primary-color); filter: blur(120px); opacity: 0.15; z-index: -1;"></div>
-        <div style="position: absolute; width: 300px; height: 300px; background: #8B5CF6; filter: blur(100px); opacity: 0.1; z-index: -1; transform: translate(100px, -50px);"></div>
-        
-        <img src="images/logo.jpeg" alt="Company Logo" class="logo-icon floating" style="width: 360px; margin-bottom: 32px;" />
-        <div style="font-family: 'Dancing Script', cursive; font-weight:700; font-size:56px; color:var(--text-primary); line-height: 1.1; margin-bottom: 12px;">Hackers InfoTech</div>
-        <div style="font-size:18px; color:var(--primary-color); font-weight:600; margin-bottom:8px; letter-spacing: 0.5px;">360° Cyber Defence for Digital Landscape</div>
-        <div style="font-size:15px; color:var(--text-secondary); font-weight:500; opacity: 0.8;">An ISO 9001:2015 Certified Company</div>
-      </div>
-    </div>
-
-  </div>
-</body>
-
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cyber Hygiene Assessment — Hackers InfoTech</title>
+    <meta name="description" content="Free Cyber Hygiene Assessment by Hackers InfoTech, Coimbatore" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+      if (window.pdfjsLib) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
