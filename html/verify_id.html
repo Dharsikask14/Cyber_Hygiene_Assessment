@@ -173,7 +173,7 @@
         }
 
         async function verifyCertificate() {
-            await checkDB();
+            if (!(await checkDB())) return;
             const idInput = document.getElementById('cert-id');
             const nameInput = document.getElementById('recipient-name');
             const idError = document.getElementById('id-error');
@@ -236,11 +236,15 @@
         }
 
         async function checkDB() {
+            const warning = document.getElementById('db-warning');
+            warning.style.display = 'none';
             try {
                 const res = await fetch('http://127.0.0.1:8000/health/');
                 if (!res.ok) throw new Error();
+                return true;
             } catch (e) {
-                document.getElementById('db-warning').style.display = 'block';
+                warning.style.display = 'block';
+                return false;
             }
         }
         // checkDB(); // Removed auto-run

@@ -752,7 +752,7 @@
 
     // ── Camera ─────────────────────────────────────────────────────────────────
     async function startCamera() {
-      await checkDB();
+      if (!(await checkDB())) return;
       try {
         if (stream) stopCamera();
         const constraints = {
@@ -902,7 +902,7 @@
 
     async function analyzeUploaded() {
       if (!uploadedData) return;
-      await checkDB();
+      if (!(await checkDB())) return;
       
       const analyzeBtn = document.getElementById('upload-analyze-btn');
       analyzeBtn.disabled = true;
@@ -1097,11 +1097,15 @@ If a field is not visible, use "Not found". If this is not a certificate image, 
     });
     // ── DB Check ──────────────────────────────────────────────────────────────
     async function checkDB() {
+      const warning = document.getElementById('db-warning');
+      warning.style.display = 'none'; // Hide before checking
       try {
-        const res = await fetch('http://127.0.0.1:8000/health/'); // Assuming a health endpoint
+        const res = await fetch('http://127.0.0.1:8000/health/');
         if (!res.ok) throw new Error();
+        return true;
       } catch (e) {
-        document.getElementById('db-warning').style.display = 'block';
+        warning.style.display = 'block';
+        return false;
       }
     }
     // checkDB(); // Removed auto-run
