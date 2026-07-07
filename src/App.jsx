@@ -989,9 +989,10 @@ ID: ${certId}`;
             </div>
           )}
           <div className="grid-2" style={{ marginBottom: 14 }}>
-            <button type="button" onClick={() => downloadPdf('cert')} disabled={busy === 'cert'} style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#7C3AED', cursor: 'pointer' }}>{busy === 'cert' ? '⏳ Generating...' : '🏅 Download Certificate'}</button>
-            <button type="button" onClick={() => downloadPdf('report')} disabled={busy === 'report'} style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer' }}>{busy === 'report' ? '⏳ Generating...' : '📋 Download Full Report'}</button>
+            <a href={`/html/certificate.html?id=${certId}`} target="_blank" rel="noreferrer" style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#D97706', cursor: 'pointer', textAlign: 'center', display: 'block', textDecoration: 'none' }}>🏆 View Digital Certificate</a>
+            <button type="button" onClick={() => downloadPdf('cert')} disabled={busy === 'cert'} style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#7C3AED', cursor: 'pointer' }}>{busy === 'cert' ? '⏳ Generating...' : '🏅 Download PDF'}</button>
           </div>
+          <button type="button" onClick={() => downloadPdf('report')} disabled={busy === 'report'} style={{ width: '100%', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer', marginBottom: 14 }}>{busy === 'report' ? '⏳ Generating...' : '📋 Download Full Report'}</button>
           <button type="button" onClick={sendEmail} style={{ width: '100%', background: emailState === 'sent' ? '#ECFDF5' : 'var(--primary-color)', border: emailState === 'sent' ? '1px solid #A7F3D0' : 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, color: emailState === 'sent' ? '#059669' : '#fff', cursor: 'pointer', marginBottom: 14 }}>
             {emailState === 'sending' ? '⏳ Sending...' : emailState === 'sent' ? `✅ Report sent to ${lead.email}` : emailState === 'failed' ? '❌ Send failed. Check config.' : `📧 Email Report to ${lead.email}`}
           </button>
@@ -1795,6 +1796,123 @@ function MyCertificatesPage() {
   );
 }
 
+function CertificateViewPage() {
+  const queryId = new URLSearchParams(window.location.search).get('id');
+  const [certHtml, setCertHtml] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!queryId) {
+      setError("No certificate ID provided.");
+      setLoading(false);
+      return;
+    }
+
+    async function load() {
+      try {
+        const cert = await getCertificate(queryId);
+        if (!cert) {
+          setError("Certificate not found.");
+          setLoading(false);
+          return;
+        }
+
+        const mx = cert.maxScore || 100;
+        const pct = cert.percentage || 0;
+        const score = cert.score || 0;
+        const grade = getGrade(pct);
+        const date = cert.issuedAt?.toDate
+          ? cert.issuedAt.toDate().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+          : new Date(cert.createdAt || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+        const time = new Date(cert.createdAt || Date.now()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+        // Generate QR payload exactly like ResultsPage
+        const qrPayload = `Hackers InfoTech - Official Certificate\nName: ${cert.name || 'Unknown'}\nGrade: ${grade.grade} - ${pct}%\nScore: ${score}/${mx} points\nIssued: ${date}\nVerify ID: ${cert.certId}`;
+        
+        let qrDataUrl = '';
+        try {
+          qrDataUrl = await window.QRCode.toDataURL(qrPayload, { 
+            width: 150, 
+            margin: 1, 
+            errorCorrectionLevel: 'L', 
+            color: { dark: '#0F172A', light: '#FFFFFF' } 
+          });
+        } catch (e) {
+          console.error("QR Generation failed", e);
+        }
+
+        const html = `
+          <div style="width:100%; height:100%; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
+            <div style="border:4px double #0EA5E9; border-radius:20px; padding:30px 40px; text-align:center; color:#fff; width:100%; flex:1; font-family:Arial,sans-serif; box-sizing:border-box; background:#0C1B2E; display:flex; flex-direction:column; justify-content:center; margin-bottom: 20px;">
+            <div style="font-size:14px; letter-spacing:.12em; color:#38BDF8; text-transform:uppercase; margin-bottom:8px;">Hackers InfoTech - Official Certificate</div>
+            <div style="font-size:36px; font-weight:700; color:#F0F9FF; margin-bottom:8px;">Cyber Hygiene Assessment</div>
+            <div style="color:#64748B; margin-bottom:16px; font-size:14px;">Certificate of Completion</div>
+            <div style="font-size:16px; color:#94A3B8; margin-bottom:6px;">This certifies that</div>
+            <div style="font-size:32px; font-weight:700; color:#38BDF8; margin-bottom:4px;">${escHtml(cert.name || '')}</div>
+            ${cert.company ? `<div style="font-size:14px; color:#64748B; margin-bottom:12px;">${escHtml(cert.company)}</div>` : ''}
+            <div style="font-size:14px; color:#94A3B8; margin-bottom:12px;">has completed the Cyber Hygiene Assessment and achieved the grade</div>
+            <div style="font-size:80px; font-weight:700; color:${grade.color}; line-height:1; font-family:monospace;">${grade.grade}</div>
+            <div style="font-size:20px; font-weight:600; color:#F0F9FF; margin:6px 0 4px;">${grade.label}</div>
+            <div style="font-size:22px; color:${grade.color}; font-weight:700; margin-bottom:4px;">${pct}% (${score}/${mx} pts)</div>
+            <div style="color:#475569; font-size:14px; margin-bottom:16px;">Assessed on ${date} at ${time}</div>
+            
+            ${qrDataUrl ? `<div style="background:#FFFFFF; border:2px solid #E2E8F0; border-radius:12px; padding:8px 12px; display:inline-flex; flex-direction:column; align-items:center; gap:6px; margin: 0 auto;">
+              <img src="${qrDataUrl}" width="100" height="100" style="display:block;" />
+              <div style="color:#0F172A; font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:700;">Scan to verify</div>
+              <div style="color:#0EA5E9; font-family:monospace; font-size:11px; font-weight:700;">${escHtml(cert.certId)}</div>
+            </div>` : `<div style="color:#EF4444; font-size:12px;">QR code unavailable</div>`}
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; font-family:Arial,sans-serif; box-sizing:border-box;">
+              <span>${BRAND.url}</span><span>${BRAND.email}</span><span>${BRAND.city}</span>
+            </div>
+          </div>
+        `;
+        setCertHtml(html);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError("Error loading certificate.");
+        setLoading(false);
+      }
+    }
+    load();
+  }, [queryId]);
+
+  if (loading) return <Page style={{ paddingTop: 60, textAlign: 'center' }}><div className="spinner" style={{ margin: '0 auto 16px' }} />Loading Certificate...</Page>;
+  if (error) return <Page style={{ paddingTop: 60, textAlign: 'center' }}><div style={{ color: '#EF4444', marginBottom: 16 }}>{error}</div><button className="btn" onClick={() => navigateTo('/')}>Go Home</button></Page>;
+
+  return (
+    <>
+      <Nav />
+      <div style={{ background: 'var(--bg-color)', minHeight: '100vh', padding: '40px 20px' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <button type="button" onClick={() => history.back()} style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}><i className="ti ti-arrow-left" /> Back</button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <a href={`/html/results.html?id=${queryId}`} className="btn-primary" style={{ padding: '8px 16px', fontSize: 13 }}><i className="ti ti-chart-bar" style={{ marginRight: 6 }}/> View Full Report</a>
+            </div>
+          </div>
+          
+          <div style={{ 
+            background: '#0C1B2E', 
+            padding: '60px 50px', 
+            borderRadius: 16, 
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+            overflow: 'hidden',
+            color: '#fff',
+            minHeight: 700,
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div dangerouslySetInnerHTML={{ __html: certHtml }} style={{ flex: 1, display: 'flex', flexDirection: 'column' }} />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function App() {
   const route = useRoute();
   if (route.endsWith('/html/login.html')) return <LoginPage />;
@@ -1803,6 +1921,7 @@ export default function App() {
   if (route.endsWith('/html/assessment_it.html')) return <AssessmentPage type="it" />;
   if (route.endsWith('/html/lead.html')) return <LeadPage />;
   if (route.endsWith('/html/results.html')) return <ResultsPage />;
+  if (route.endsWith('/html/certificate.html')) return <CertificateViewPage />;
   if (route.endsWith('/html/my-certificates.html')) return <MyCertificatesPage />;
   if (route.endsWith('/html/verify_id.html')) return <VerifyIdPage />;
   if (route.endsWith('/html/cert_verify.html')) return <CertDetailsPage />;
