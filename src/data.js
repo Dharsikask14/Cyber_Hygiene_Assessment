@@ -6,9 +6,9 @@ export const BRAND = {
   email: 'thehackersinfotech@gmail.com',
   bookingUrl: 'https://calendly.com/hackersinfotech',
   emailjs: {
-    serviceId: 'service_bn1go7u',
-    templateId: 'template_d0r6x1i',
-    publicKey: 'IYAEEHJKqAieS9uH0',
+    serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+    templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+    publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
   },
 };
 

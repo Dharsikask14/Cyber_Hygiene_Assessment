@@ -4,12 +4,12 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBI69bbx5ZRnCyUjKyIJRzrM9wEQ4dH6p8",
-  authDomain: "cyber-hygiene-assessment.firebaseapp.com",
-  projectId: "cyber-hygiene-assessment",
-  storageBucket: "cyber-hygiene-assessment.firebasestorage.app",
-  messagingSenderId: "905533469702",
-  appId: "1:905533469702:web:2c8d1baf0a6fd2acc0bf87",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
