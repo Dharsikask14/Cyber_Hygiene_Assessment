@@ -106,6 +106,11 @@ export function Nav() {
                   <div className="dropdown-header">
                     <div className="dropdown-name">{profile?.name || user.displayName || 'User'}</div>
                     <div className="dropdown-email">{user.email}</div>
+                    {user?.metadata?.lastSignInTime && (
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>
+                        Logged in: {new Date(user.metadata.lastSignInTime).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                      </div>
+                    )}
                   </div>
                   <div className="dropdown-divider" />
                   <button type="button" className="dropdown-item" onClick={() => { setDropdownOpen(false); navigateTo('/html/my-certificates.html'); }}>

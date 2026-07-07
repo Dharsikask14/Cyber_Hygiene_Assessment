@@ -396,6 +396,11 @@ function AssessmentPage({ type }) {
     }
   }, [type, sec, sections.length]);
 
+  // Scroll to top whenever the section changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [sec]);
+
   function setAnswer(questionId, value) {
     const next = { ...answers, [questionId]: value };
     setAnswers(next);
@@ -767,11 +772,10 @@ ID: ${certId}`;
       <div style="font-size:80px; font-weight:700; color:${grade.color}; line-height:1; font-family:monospace;">${grade.grade}</div>
       <div style="font-size:20px; font-weight:600; color:#F0F9FF; margin:6px 0 4px;">${grade.label}</div>
       <div style="font-size:22px; color:${grade.color}; font-weight:700; margin-bottom:4px;">${pct}% (${score}/${mx} pts)</div>
-      <div style="color:#475569; font-size:14px; margin-bottom:16px;">Assessed on ${date} at ${time}</div>
+      <div style="color:#475569; font-size:14px; margin-bottom:16px;">Assessed on ${date}</div>
       
       ${qrDataUrl ? `<div style="background:#FFFFFF; border:2px solid #E2E8F0; border-radius:12px; padding:8px 12px; display:inline-flex; flex-direction:column; align-items:center; gap:6px; margin: 0 auto;">
         <img src="${qrDataUrl}" width="100" height="100" style="display:block;" />
-        <div style="color:#0F172A; font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:700;">Scan to verify</div>
         <div style="color:#0EA5E9; font-family:monospace; font-size:11px; font-weight:700;">${escHtml(certId)}</div>
       </div>` : `<div style="color:#EF4444; font-size:12px;">QR code unavailable</div>`}
       </div>
@@ -808,7 +812,7 @@ ID: ${certId}`;
       box-sizing: border-box;
       overflow: hidden;
       background: ${isCert ? '#0C1B2E' : '#ffffff'};
-      padding: ${isCert ? '60px 50px' : '40px 30px'};
+      padding: ${isCert ? '40px 40px' : '40px 30px'};
       color: ${isCert ? '#fff' : '#000'};
     `;
     document.body.appendChild(el);
@@ -973,7 +977,6 @@ ID: ${certId}`;
               
               <div style={{ background: '#FFFFFF', border: '2px solid #E2E8F0', borderRadius: 12, padding: 12, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginBottom: 20 }}>
                 <img src={certQrDataUrl} width="100" height="100" style={{ display: 'block' }} alt="Verify QR" />
-                <div style={{ color: '#0F172A', fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', fontWeight: 700 }}>Scan to verify</div>
                 <div style={{ color: '#0EA5E9', fontFamily: 'monospace', fontSize: 11, fontWeight: 700 }}>{certId}</div>
               </div>
               
@@ -989,10 +992,9 @@ ID: ${certId}`;
             </div>
           )}
           <div className="grid-2" style={{ marginBottom: 14 }}>
-            <a href={`/html/certificate.html?id=${certId}`} target="_blank" rel="noreferrer" style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#D97706', cursor: 'pointer', textAlign: 'center', display: 'block', textDecoration: 'none' }}>🏆 View Digital Certificate</a>
-            <button type="button" onClick={() => downloadPdf('cert')} disabled={busy === 'cert'} style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#7C3AED', cursor: 'pointer' }}>{busy === 'cert' ? '⏳ Generating...' : '🏅 Download PDF'}</button>
+            <button type="button" onClick={() => downloadPdf('cert')} disabled={busy === 'cert'} style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#7C3AED', cursor: 'pointer' }}>{busy === 'cert' ? '⏳ Generating...' : '🏅 Download Certificate'}</button>
+            <button type="button" onClick={() => downloadPdf('report')} disabled={busy === 'report'} style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer' }}>{busy === 'report' ? '⏳ Generating...' : '📋 Download Full Report'}</button>
           </div>
-          <button type="button" onClick={() => downloadPdf('report')} disabled={busy === 'report'} style={{ width: '100%', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer', marginBottom: 14 }}>{busy === 'report' ? '⏳ Generating...' : '📋 Download Full Report'}</button>
           <button type="button" onClick={sendEmail} style={{ width: '100%', background: emailState === 'sent' ? '#ECFDF5' : 'var(--primary-color)', border: emailState === 'sent' ? '1px solid #A7F3D0' : 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, color: emailState === 'sent' ? '#059669' : '#fff', cursor: 'pointer', marginBottom: 14 }}>
             {emailState === 'sending' ? '⏳ Sending...' : emailState === 'sent' ? `✅ Report sent to ${lead.email}` : emailState === 'failed' ? '❌ Send failed. Check config.' : `📧 Email Report to ${lead.email}`}
           </button>
@@ -1013,17 +1015,17 @@ ID: ${certId}`;
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                 LinkedIn
               </a>
-              {/* WhatsApp */}
+              {/* Facebook */}
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`🎓 I just completed the Cyber Hygiene Assessment by Hackers InfoTech and scored ${grade.grade} (${pct}%)!\n\nVerify my certificate here: ${verifyUrl}`)}`}
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(verifyUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s' }}
+                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#1877F2', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-                WhatsApp
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                Facebook
               </a>
               {/* Twitter / X */}
               <a
@@ -1796,122 +1798,6 @@ function MyCertificatesPage() {
   );
 }
 
-function CertificateViewPage() {
-  const queryId = new URLSearchParams(window.location.search).get('id');
-  const [certHtml, setCertHtml] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (!queryId) {
-      setError("No certificate ID provided.");
-      setLoading(false);
-      return;
-    }
-
-    async function load() {
-      try {
-        const cert = await getCertificate(queryId);
-        if (!cert) {
-          setError("Certificate not found.");
-          setLoading(false);
-          return;
-        }
-
-        const mx = cert.maxScore || 100;
-        const pct = cert.percentage || 0;
-        const score = cert.score || 0;
-        const grade = getGrade(pct);
-        const date = cert.issuedAt?.toDate
-          ? cert.issuedAt.toDate().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
-          : new Date(cert.createdAt || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
-        const time = new Date(cert.createdAt || Date.now()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-        // Generate QR payload exactly like ResultsPage
-        const qrPayload = `Hackers InfoTech - Official Certificate\nName: ${cert.name || 'Unknown'}\nGrade: ${grade.grade} - ${pct}%\nScore: ${score}/${mx} points\nIssued: ${date}\nVerify ID: ${cert.certId}`;
-        
-        let qrDataUrl = '';
-        try {
-          qrDataUrl = await window.QRCode.toDataURL(qrPayload, { 
-            width: 150, 
-            margin: 1, 
-            errorCorrectionLevel: 'L', 
-            color: { dark: '#0F172A', light: '#FFFFFF' } 
-          });
-        } catch (e) {
-          console.error("QR Generation failed", e);
-        }
-
-        const html = `
-          <div style="width:100%; height:100%; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
-            <div style="border:4px double #0EA5E9; border-radius:20px; padding:30px 40px; text-align:center; color:#fff; width:100%; flex:1; font-family:Arial,sans-serif; box-sizing:border-box; background:#0C1B2E; display:flex; flex-direction:column; justify-content:center; margin-bottom: 20px;">
-            <div style="font-size:14px; letter-spacing:.12em; color:#38BDF8; text-transform:uppercase; margin-bottom:8px;">Hackers InfoTech - Official Certificate</div>
-            <div style="font-size:36px; font-weight:700; color:#F0F9FF; margin-bottom:8px;">Cyber Hygiene Assessment</div>
-            <div style="color:#64748B; margin-bottom:16px; font-size:14px;">Certificate of Completion</div>
-            <div style="font-size:16px; color:#94A3B8; margin-bottom:6px;">This certifies that</div>
-            <div style="font-size:32px; font-weight:700; color:#38BDF8; margin-bottom:4px;">${escHtml(cert.name || '')}</div>
-            ${cert.company ? `<div style="font-size:14px; color:#64748B; margin-bottom:12px;">${escHtml(cert.company)}</div>` : ''}
-            <div style="font-size:14px; color:#94A3B8; margin-bottom:12px;">has completed the Cyber Hygiene Assessment and achieved the grade</div>
-            <div style="font-size:80px; font-weight:700; color:${grade.color}; line-height:1; font-family:monospace;">${grade.grade}</div>
-            <div style="font-size:20px; font-weight:600; color:#F0F9FF; margin:6px 0 4px;">${grade.label}</div>
-            <div style="font-size:22px; color:${grade.color}; font-weight:700; margin-bottom:4px;">${pct}% (${score}/${mx} pts)</div>
-            <div style="color:#475569; font-size:14px; margin-bottom:16px;">Assessed on ${date} at ${time}</div>
-            
-            ${qrDataUrl ? `<div style="background:#FFFFFF; border:2px solid #E2E8F0; border-radius:12px; padding:8px 12px; display:inline-flex; flex-direction:column; align-items:center; gap:6px; margin: 0 auto;">
-              <img src="${qrDataUrl}" width="100" height="100" style="display:block;" />
-              <div style="color:#0F172A; font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:700;">Scan to verify</div>
-              <div style="color:#0EA5E9; font-family:monospace; font-size:11px; font-weight:700;">${escHtml(cert.certId)}</div>
-            </div>` : `<div style="color:#EF4444; font-size:12px;">QR code unavailable</div>`}
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; font-family:Arial,sans-serif; box-sizing:border-box;">
-              <span>${BRAND.url}</span><span>${BRAND.email}</span><span>${BRAND.city}</span>
-            </div>
-          </div>
-        `;
-        setCertHtml(html);
-        setLoading(false);
-      } catch (err) {
-        console.error(err);
-        setError("Error loading certificate.");
-        setLoading(false);
-      }
-    }
-    load();
-  }, [queryId]);
-
-  if (loading) return <Page style={{ paddingTop: 60, textAlign: 'center' }}><div className="spinner" style={{ margin: '0 auto 16px' }} />Loading Certificate...</Page>;
-  if (error) return <Page style={{ paddingTop: 60, textAlign: 'center' }}><div style={{ color: '#EF4444', marginBottom: 16 }}>{error}</div><button className="btn" onClick={() => navigateTo('/')}>Go Home</button></Page>;
-
-  return (
-    <>
-      <Nav />
-      <div style={{ background: 'var(--bg-color)', minHeight: '100vh', padding: '40px 20px' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <button type="button" onClick={() => history.back()} style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}><i className="ti ti-arrow-left" /> Back</button>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <a href={`/html/results.html?id=${queryId}`} className="btn-primary" style={{ padding: '8px 16px', fontSize: 13 }}><i className="ti ti-chart-bar" style={{ marginRight: 6 }}/> View Full Report</a>
-            </div>
-          </div>
-          
-          <div style={{ 
-            background: '#0C1B2E', 
-            padding: '60px 50px', 
-            borderRadius: 16, 
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
-            overflow: 'hidden',
-            color: '#fff',
-            minHeight: 700,
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div dangerouslySetInnerHTML={{ __html: certHtml }} style={{ flex: 1, display: 'flex', flexDirection: 'column' }} />
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
 
 export default function App() {
   const route = useRoute();
@@ -1921,7 +1807,6 @@ export default function App() {
   if (route.endsWith('/html/assessment_it.html')) return <AssessmentPage type="it" />;
   if (route.endsWith('/html/lead.html')) return <LeadPage />;
   if (route.endsWith('/html/results.html')) return <ResultsPage />;
-  if (route.endsWith('/html/certificate.html')) return <CertificateViewPage />;
   if (route.endsWith('/html/my-certificates.html')) return <MyCertificatesPage />;
   if (route.endsWith('/html/verify_id.html')) return <VerifyIdPage />;
   if (route.endsWith('/html/cert_verify.html')) return <CertDetailsPage />;
