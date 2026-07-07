@@ -1,4 +1,4 @@
-# 🛡️ Cyber Hygiene Assessment System
+# Cyber Hygiene Assessment System
 
 A professional, high-performance web application designed to evaluate and improve personal and professional cybersecurity posture. Built with a focus on modern aesthetics and data privacy, this tool helps users identify security gaps and provides actionable advice to mitigate risks.
 
@@ -9,25 +9,25 @@ A professional, high-performance web application designed to evaluate and improv
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-### 🧠 Smart Assessments
+###  Smart Assessments
 - **Dual Profiles**: Tailored questions for the **General Public** (mobile, banking, scams) and **IT & Tech Users** (IAM, Cloud, DevOps, Hardening).
 - **Comprehensive Coverage**: 50+ weighted questions across 13 critical security domains.
 - **Dynamic Grading**: Instant scoring system with grades from **A+ (Champion)** to **C (High Risk)**.
 
-### 📜 Professional Certification
+###  Professional Certification
 - **Instant Certificate**: Automatically generates a high-quality PDF certificate upon completion.
 - **Personalized Reports**: Detailed PDF reports with category-wise breakdowns and a custom **Action Plan**.
 - **QR Code Verification**: Every certificate includes a unique QR code for instant authenticity verification.
 
-### 🔍 Verification Suite
+###  Verification Suite
 - **ID-Based Lookup**: Verify any certificate by its unique ID.
 - **Camera Scanner**: Integrated QR scanner for quick mobile verification.
 - **Secure Hashing**: Uses SHA-256 hashing to ensure certificate integrity.
 
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 - **Frontend**: React.js (v19)
 - **Build Tool**: Vite
@@ -39,7 +39,7 @@ A professional, high-performance web application designed to evaluate and improv
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (Latest LTS recommended)

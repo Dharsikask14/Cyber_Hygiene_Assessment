@@ -2,9 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 import { ALL, BRAND, GENERAL_SECTIONS, IT_SECTIONS, getGrade, maxScore } from './data.js';
-import { CERT_STORE_KEY, buildVerifyUrl, escHtml, genCertId, linkTo, navigateTo, readJson, sha256 } from './utils.js';
+import { CERT_STORE_KEY, buildQRPayload, buildVerifyUrl, parseQRPayload, escHtml, genCertId, linkTo, navigateTo, readJson, sha256 } from './utils.js';
 import { Nav, Page, ShieldLogo } from './components.jsx';
-import logoUrl from '../images/logo.jpeg';
+import { onAuthChange, signUpWithEmail, signInWithEmail } from './auth.js';
+import { saveCertificate, getCertificate, getUserCertificates, getUserProfile } from './db.js';
+import { auth } from './firebase.js';
+import logoUrl from '../images/logo.png';
 
 const TYPE_ROUTES = {
   general: '/html/assessment_general.html',
@@ -23,6 +26,20 @@ function findCertificate(certId) {
 
 function parseVerifyPayload(text) {
   if (!text) return null;
+  // Try JSON payload format first
+  const jsonPayload = parseQRPayload(text);
+  if (jsonPayload?.id) {
+    return {
+      id: jsonPayload.id,
+      name: jsonPayload.n || '',
+      url: text,
+      payload: jsonPayload,
+      grade: jsonPayload.g || '',
+      score: jsonPayload.s || '',
+      date: jsonPayload.d || '',
+    };
+  }
+  // Fallback to URL format
   try {
     const url = new URL(text, window.location.origin);
     const id = url.searchParams.get('id');
@@ -37,20 +54,22 @@ function parseVerifyPayload(text) {
   return null;
 }
 
-function makeLocalVerificationResult(certId, fallbackName = '') {
+function makeLocalVerificationResult(certId, fallbackName = '', payload = null) {
   const cert = findCertificate(certId);
   const id = cert?.id || certId || '';
   const name = cert?.name || fallbackName || 'Not available';
+  const p = payload || {};
   return {
     isValid: Boolean(id && name),
     certificateType: 'Cyber Hygiene Assessment',
     recipientName: name,
-    issuer: BRAND.name,
+    issuer: p.i || BRAND.name,
     courseOrSubject: 'Cyber Hygiene Assessment',
-    issueDate: cert?.createdAt ? new Date(cert.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Not found',
+    issueDate: p.d || (cert?.createdAt ? new Date(cert.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Not found'),
     expiryDate: 'N/A',
     credentialId: id,
-    grade: 'N/A',
+    grade: p.g || 'N/A',
+    score: p.s || '',
     verificationStatus: cert || fallbackName ? 'Verified' : 'Unverified',
     notes: cert || fallbackName ? 'QR certificate details resolved successfully.' : 'Certificate ID was not found in this browser certificate registry.',
   };
@@ -75,12 +94,28 @@ function Link({ href, children, onBeforeNavigate, ...props }) {
 }
 
 function HomePage() {
+  const [authUser, setAuthUser] = useState(undefined); // undefined = loading
+  useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = ''; }; }, []);
+  useEffect(() => {
+    const unsub = onAuthChange((u) => setAuthUser(u));
+    return unsub;
+  }, []);
+
+  function handleStartAssessment(e) {
+    e.preventDefault();
+    if (authUser) {
+      navigateTo('/html/type.html');
+    } else {
+      navigateTo('/html/login.html');
+    }
+  }
+
   return (
-    <Page style={{ position: 'relative', zIndex: 1 }}>
+    <Page style={{ position: 'relative', zIndex: 1, height: 'calc(100vh - 56px)', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 40px' }}>
       <div style={{ position: 'absolute', top: -100, left: -150, width: 450, height: 450, background: 'var(--primary-color)', filter: 'blur(140px)', opacity: 0.12, borderRadius: '50%', zIndex: -1, pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', top: 250, right: -200, width: 400, height: 400, background: '#8B5CF6', filter: 'blur(140px)', opacity: 0.1, borderRadius: '50%', zIndex: -1, pointerEvents: 'none' }} />
 
-      <div className="hero-grid" style={{ padding: '56px 0 40px' }}>
+      <div className="hero-grid" style={{ padding: '0' }}>
         <div style={{ textAlign: 'left' }}>
           <div className="floating" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '6px 16px', fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary-color)', display: 'inline-block', boxShadow: '0 0 8px var(--primary-color)' }} />
@@ -95,7 +130,9 @@ function HomePage() {
           </p>
 
           <div className="hero-buttons">
-            <Link href="/html/type.html" className="btn-primary floating">Start Assessment →</Link>
+            <button type="button" className="btn-primary floating" onClick={handleStartAssessment}>
+              {authUser === undefined ? 'Loading...' : 'Start Assessment →'}
+            </button>
           </div>
           <div style={{ marginTop: 16, fontSize: 13, color: 'var(--text-secondary)', marginBottom: 32, fontWeight: 500 }}>
             5 minutes · 100% free · Certificate + PDF report included
@@ -107,10 +144,10 @@ function HomePage() {
                 <div style={{ width: 36, height: 36, background: 'var(--grade-a-bg)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><ShieldLogo /></div>
                 <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Verify a Certificate</h3>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.6 }}>Did someone share a Hackers InfoTech certificate with you? Verify its authenticity instantly using the Certificate ID or by scanning it with your camera.</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.6 }}>Did someone share a Hackers InfoTech certificate with you? Verify its authenticity instantly using the Certificate ID or by uploading the certificate document.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 'auto' }}>
                 <Link href="/html/verify_id.html" className="btn-primary" style={{ width: '100%', padding: 10, fontSize: 14, borderRadius: 8, textDecoration: 'none', textAlign: 'center', display: 'block' }}>🔍 Verify through ID</Link>
-                <Link href="/html/Certificate_Scanner.html" className="btn-primary" style={{ width: '100%', padding: 10, fontSize: 14, borderRadius: 8, textDecoration: 'none', textAlign: 'center', display: 'block', background: 'var(--grade-a)', color: '#fff', border: 'none' }}>📷 Verify through Scanner (Camera)</Link>
+                <Link href="/html/Certificate_Scanner.html" className="btn-primary" style={{ width: '100%', padding: 10, fontSize: 14, borderRadius: 8, textDecoration: 'none', textAlign: 'center', display: 'block', background: 'var(--grade-a)', color: '#fff', border: 'none' }}>📄 Upload & Verify Document</Link>
               </div>
             </div>
 
@@ -147,6 +184,159 @@ function HomePage() {
   );
 }
 
+// ── Login / Signup Page ──────────────────────────────────────────
+function LoginPage() {
+  const [mode, setMode] = useState('login'); // 'login' | 'signup'
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [org, setOrg] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const unsub = onAuthChange((u) => { if (u) navigateTo('/'); });
+    return unsub;
+  }, []);
+
+  function friendlyError(code) {
+    const map = {
+      'auth/email-already-in-use': 'This email is already registered. Please sign in.',
+      'auth/invalid-email': 'Please enter a valid email address.',
+      'auth/weak-password': 'Password must be at least 6 characters.',
+      'auth/wrong-password': 'Incorrect password. Please try again.',
+      'auth/user-not-found': 'No account found with this email. Please sign up.',
+      'auth/invalid-credential': 'Incorrect email or password.',
+      'auth/too-many-requests': 'Too many attempts. Please wait a moment and try again.',
+    };
+    return map[code] || 'Something went wrong. Please try again.';
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    if (mode === 'signup') {
+      if (!name.trim()) { setError('Please enter your full name.'); return; }
+      if (!phone.trim()) { setError('Please enter your phone number.'); return; }
+      if (!org.trim()) { setError('Please enter your organization or college name.'); return; }
+    }
+    if (!email.trim()) { setError('Please enter your email address.'); return; }
+    if (!password) { setError('Please enter your password.'); return; }
+    setLoading(true);
+    try {
+      if (mode === 'signup') {
+        await signUpWithEmail({ name: name.trim(), email: email.trim(), password, phone: phone.trim(), company: org.trim() });
+      } else {
+        await signInWithEmail(email.trim(), password);
+      }
+      navigateTo('/');
+    } catch (err) {
+      setError(friendlyError(err.code));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <Nav />
+      <div className="login-page">
+        <div className="login-card">
+          {/* Header */}
+          <div className="login-logo">
+            <div className="login-logo-icon"><i className="ti ti-shield-lock" /></div>
+            <div className="login-title">{mode === 'login' ? 'Welcome back' : 'Create your account'}</div>
+            <div className="login-subtitle">
+              {mode === 'login'
+                ? 'Sign in to access your Cyber Hygiene Assessment'
+                : 'Fill in your details to get started with Hackers InfoTech'}
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="auth-error">
+              <i className="ti ti-alert-circle" /> {error}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit}>
+            {mode === 'signup' && (
+              <>
+                <div className="input-group">
+                  <label>Full Name <span style={{ color: '#EF4444' }}>*</span></label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your full name"
+                    autoComplete="name"
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Phone Number <span style={{ color: '#EF4444' }}>*</span></label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+91 XXXXX XXXXX"
+                    autoComplete="tel"
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Organization / College <span style={{ color: '#EF4444' }}>*</span></label>
+                  <input
+                    type="text"
+                    value={org}
+                    onChange={(e) => setOrg(e.target.value)}
+                    placeholder="Company or college name"
+                    autoComplete="organization"
+                  />
+                </div>
+              </>
+            )}
+            <div className="input-group">
+              <label>Email Address <span style={{ color: '#EF4444' }}>*</span></label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@email.com"
+                autoComplete="email"
+              />
+            </div>
+            <div className="input-group">
+              <label>Password <span style={{ color: '#EF4444' }}>*</span></label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === 'signup' ? 'Min. 6 characters' : 'Your password'}
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              />
+            </div>
+            <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: 4 }} disabled={loading}>
+              {loading ? '⏳ Please wait...' : mode === 'login' ? 'Sign In →' : 'Create Account →'}
+            </button>
+          </form>
+
+          {/* Toggle */}
+          <div className="auth-toggle">
+            {mode === 'login' ? (
+              <>Don’t have an account? <button type="button" onClick={() => { setMode('signup'); setError(''); }}>Sign Up</button></>
+            ) : (
+              <>Already have an account? <button type="button" onClick={() => { setMode('login'); setError(''); }}>Sign In</button></>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function TypePage() {
   function choose(type) {
     localStorage.setItem('assessmentType', type);
@@ -162,8 +352,8 @@ function TypePage() {
         <ChoiceCard type="general" icon="👤" title="General Public" subtitle="Phone · Laptop · Internet User" color="#7C3AED" items={['No technical knowledge needed', 'Mobile, passwords, banking', 'Scam & fraud awareness', '28 questions · ~4 min']} bg="#F5F3FF" border="#DDD6FE" onChoose={choose} />
         <ChoiceCard type="it" icon="💻" title="IT & Tech Users" subtitle="Developers · IT Staff · Freelancers" color="#0EA5E9" items={['Advanced security practices', 'DevOps, cloud, network', 'Threat detection & tools', '31 questions · ~6 min']} bg="#F0F9FF" border="#BAE6FD" delay="0.2s" onChoose={choose} />
       </div>
-      <div style={{ textAlign: 'center' }}>
-        <Link href="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: 13 }}>← Back</Link>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <Link href="/" className="back-btn" style={{ display: 'inline-flex' }}><i className="ti ti-arrow-left" /> Back</Link>
       </div>
     </Page>
   );
@@ -279,7 +469,11 @@ function AssessmentPage({ type }) {
       })}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 20 }}>
-        <button type="button" onClick={() => sec > 0 && goToSection(sec - 1)} disabled={sec === 0} className="btn-primary" style={{ background: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>← Previous</button>
+        {sec === 0 ? (
+          <Link href="/html/type.html" className="back-btn"><i className="ti ti-arrow-left" /> Back</Link>
+        ) : (
+          <button type="button" onClick={() => goToSection(sec - 1)} className="btn-secondary">← Previous</button>
+        )}
         <button type="button" onClick={nextSection} disabled={!allAnswered} className="btn-primary" style={{ opacity: allAnswered ? 1 : 0.5 }}>{sec === sections.length - 1 ? 'See My Score →' : 'Next Section →'}</button>
       </div>
     </Page>
@@ -297,102 +491,222 @@ function AnswerButton({ active, positive, onClick, children }) {
 }
 
 function LeadPage() {
-  const [lead, setLead] = useState({ name: '', email: '', phone: '', company: '' });
-  const [loading, setLoading] = useState(false);
-  const valid = lead.name.trim() && lead.email.trim() && lead.phone.trim();
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthChange(async (firebaseUser) => {
+      if (!firebaseUser) {
+        // Not logged in — redirect to login
+        navigateTo('/html/login.html');
+        return;
+      }
+      // Load profile from Firestore
+      const p = await getUserProfile(firebaseUser.uid);
+      const resolved = p || { name: firebaseUser.displayName || '', email: firebaseUser.email || '', phone: '', company: '', uid: firebaseUser.uid };
+      setProfile({ ...resolved, uid: firebaseUser.uid });
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
 
   async function submit() {
-    if (!valid) return;
-    setLoading(true);
+    if (!profile) return;
+    setSubmitting(true);
     const certId = genCertId();
-    const hash = await sha256(`${lead.name.trim()}|${certId}`);
+    const hash = await sha256(`${profile.name.trim()}|${certId}`);
+    // Keep localStorage for backward compatibility
     const store = readJson(CERT_STORE_KEY, {});
-    store[certId] = { hash, name: lead.name.trim(), createdAt: new Date().toISOString() };
+    store[certId] = { hash, name: profile.name.trim(), createdAt: new Date().toISOString() };
     localStorage.setItem(CERT_STORE_KEY, JSON.stringify(store));
-    localStorage.setItem('lead', JSON.stringify({ name: lead.name.trim(), email: lead.email.trim(), phone: lead.phone.trim(), company: lead.company.trim(), certId }));
+    localStorage.setItem('lead', JSON.stringify({
+      name: profile.name?.trim() || '',
+      email: profile.email?.trim() || '',
+      phone: profile.phone?.trim() || '',
+      company: profile.company?.trim() || '',
+      certId,
+      uid: profile.uid,
+    }));
     navigateTo('/html/results.html');
   }
 
+  if (loading) {
+    return (
+      <Page style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 56px)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="loader" style={{ margin: '0 auto 16px' }} />
+          <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading your profile...</div>
+        </div>
+      </Page>
+    );
+  }
+
   return (
-    <Page style={{ paddingTop: 48, maxWidth: 480 }}>
+    <Page style={{ padding: '40px 40px', maxWidth: 500, display: 'flex', flexDirection: 'column', gap: 0 }}>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <div style={{ fontSize: 40, marginBottom: 10 }}>🎯</div>
-        <h2 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>Your results are ready!</h2>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>Enter your details to get your grade, PDF certificate, full report, and personalised action plan - sent to your email instantly.</p>
+        <div style={{ fontSize: 36, marginBottom: 8 }}>🎉</div>
+        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Your results are ready!</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>We'll generate your certificate using your account profile.</p>
       </div>
-      <div className="card floating">
-        <LeadInput label="Full Name *" value={lead.name} placeholder="Your full name" onChange={(name) => setLead({ ...lead, name })} />
-        <LeadInput label="Email Address *" type="email" value={lead.email} placeholder="you@email.com" onChange={(email) => setLead({ ...lead, email })} />
-        <LeadInput label="Phone Number *" value={lead.phone} placeholder="+91 XXXXX XXXXX" onChange={(phone) => setLead({ ...lead, phone })} />
-        <LeadInput label="Company / College (optional)" value={lead.company} placeholder="Where you work or study" onChange={(company) => setLead({ ...lead, company })} />
-        <button type="button" onClick={submit} id="submitBtn" className="btn-primary" style={{ width: '100%', marginTop: 4 }} disabled={!valid || loading}>{loading ? '⏳ Preparing your results...' : 'Show My Cyber Safety Score →'}</button>
-        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-secondary)', marginTop: 10, lineHeight: 1.5 }}>Your information is kept confidential and used only for sending your results and cybersecurity updates from Hackers InfoTech.</p>
+
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 }}>Your Certificate Details</div>
+        {[
+          { icon: 'ti-user', label: 'Name', value: profile?.name || '—' },
+          { icon: 'ti-mail', label: 'Email', value: profile?.email || '—' },
+          { icon: 'ti-phone', label: 'Phone', value: profile?.phone || 'Not set' },
+          { icon: 'ti-building', label: 'Company', value: profile?.company || 'Not set' },
+        ].map(({ icon, label, value }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--grade-a-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <i className={`ti ${icon}`} style={{ color: 'var(--primary-color)', fontSize: 15 }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 1 }}>{label}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{value}</div>
+            </div>
+          </div>
+        ))}
+        <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5 }}>
+          Profile details are pulled from your account. To update them, edit your profile.
+        </p>
+      </div>
+
+      <button type="button" onClick={submit} className="btn-primary" style={{ width: '100%' }} disabled={submitting}>
+        {submitting ? '⏳ Preparing your results...' : 'Show My Cyber Safety Score →'}
+      </button>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
+        <Link href="/html/type.html" className="back-btn"><i className="ti ti-arrow-left" /> Back</Link>
       </div>
     </Page>
   );
 }
 
-function LeadInput({ label, value, onChange, placeholder, type = 'text' }) {
+function LeadInput({ label, value, onChange, onBlur, placeholder, type = 'text', error }) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>{label}</label>
-      <input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} style={{ width: '100%', padding: '10px 14px', fontSize: 14, border: '1px solid var(--border-color)', borderRadius: 9, background: 'var(--bg-color)', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
+    <div style={{ marginBottom: 10 }}>
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>{label}</label>
+      <input type={type} value={value} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} placeholder={placeholder} style={{ width: '100%', padding: '9px 12px', fontSize: 14, border: `1px solid ${error ? '#EF4444' : 'var(--border-color)'}`, borderRadius: 9, background: 'var(--bg-color)', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
+      {error && <div style={{ color: '#EF4444', fontSize: 11, marginTop: 3, fontWeight: 500 }}>{error}</div>}
     </div>
   );
 }
 
 function ResultsPage() {
-  const lead = readJson('lead', {});
-  const type = localStorage.getItem('assessmentType');
-  const answers = readJson('answers', {});
-  const pdfCertRef = useRef(null);
-  const pdfReportRef = useRef(null);
-  const [emailState, setEmailState] = useState('');
+  const queryId = new URLSearchParams(window.location.search).get('id');
+  const [dbData, setDbData] = useState(null);
+  const [loadingDb, setLoadingDb] = useState(!!queryId);
   const [busy, setBusy] = useState('');
+  const [emailState, setEmailState] = useState('');
   const [certQrDataUrl, setCertQrDataUrl] = useState('');
+  const [certSaved, setCertSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
 
+  // --- Fetch from Firestore when opened via ?id= URL ---
   useEffect(() => {
-    if (!type || !lead.email) {
-      navigateTo('/');
+    if (queryId) {
+      getCertificate(queryId).then(cert => {
+        if (cert) {
+          setDbData({
+            lead: { certId: cert.certId, name: cert.name, email: cert.email || '', company: cert.company || '', uid: cert.uid },
+            type: cert.assessmentType || 'general',
+            answers: cert.answers || {},
+            score: cert.score || 0,
+            mx: cert.maxScore || 100,
+            pct: cert.percentage || 0,
+            date: cert.issuedAt?.toDate
+              ? cert.issuedAt.toDate().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+              : new Date(cert.createdAt || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }),
+          });
+        }
+        setLoadingDb(false);
+      }).catch(() => setLoadingDb(false));
     }
-  }, [type, lead.email]);
+  }, [queryId]);
 
-  const sections = ALL[type] || GENERAL_SECTIONS;
-  const allQuestions = sections.flatMap((section) => section.questions);
-  const mx = maxScore(type);
-  const score = allQuestions.reduce((sum, question) => sum + (answers[question.id] === 'yes' ? question.w : 0), 0);
-  const pct = mx > 0 ? Math.round((score / mx) * 100) : 0;
+  // --- Derived values (all computed before any early return) ---
+  const lead        = dbData ? dbData.lead    : readJson('lead', {});
+  const type        = dbData ? dbData.type    : localStorage.getItem('assessmentType');
+  const answers     = dbData ? dbData.answers : readJson('answers', {});
+  const reportDate  = dbData ? dbData.date    : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  const sections    = ALL[type] || GENERAL_SECTIONS;
+  const allQuestions = sections.flatMap(s => s.questions);
+  const mx    = dbData ? dbData.mx  : maxScore(type);
+  const score = dbData ? dbData.score : allQuestions.reduce((sum, q) => sum + (answers[q.id] === 'yes' ? q.w : 0), 0);
+  const pct   = dbData ? dbData.pct  : (mx > 0 ? Math.round((score / mx) * 100) : 0);
   const grade = getGrade(pct);
-  const failed = allQuestions.filter((question) => answers[question.id] === 'no');
-  const date = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
-  const verifyUrl = lead.certId ? buildVerifyUrl(lead.certId, lead.name) : '';
+  const failed = allQuestions.filter(q => answers[q.id] === 'no');
+  const date = reportDate;
+  const reportTime = dbData ? new Date(dbData.createdAt || Date.now()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+  const time = reportTime;
+  const certId   = lead.certId || queryId || '';
+  const verifyUrl = certId ? `${location.origin}/html/results.html?id=${encodeURIComponent(certId)}` : '';
+  
+  // The QR payload will now contain the exact text details of the certificate.
+  // This allows offline verification simply by scanning the code, without needing to open a URL.
+  const qrPayload = useMemo(() => {
+    if (!certId) return '';
+    return `Hackers InfoTech - Official Certificate
+Name: ${lead.name}
+${lead.company ? `Company: ${lead.company}\n` : ''}Grade: ${grade.grade} (${grade.label})
+Score: ${pct}%
+Date: ${date}
+Time: ${time}
+ID: ${certId}`;
+  }, [certId, lead.name, lead.company, grade.grade, grade.label, pct, date, time]);
 
+  // --- Redirect (no data and not a direct link) ---
+  useEffect(() => {
+    if (!loadingDb && !queryId && (!type || !lead.email)) navigateTo('/');
+  }, [type, lead.email, loadingDb, queryId]);
+
+  // --- Generate QR code image (MUST be above early return) ---
   useEffect(() => {
     let active = true;
-    if (!verifyUrl) {
-      setCertQrDataUrl('');
-      return undefined;
-    }
-    QRCode.toDataURL(verifyUrl, {
-      width: 100,
-      margin: 1,
-      errorCorrectionLevel: 'H',
-      color: { dark: '#0F172A', light: '#FFFFFF' },
-    }).then((dataUrl) => {
-      if (active) setCertQrDataUrl(dataUrl);
-    });
-    return () => {
-      active = false;
-    };
-  }, [verifyUrl]);
+    if (!qrPayload) { setCertQrDataUrl(''); return; }
+    QRCode.toDataURL(qrPayload, { width: 160, margin: 1, errorCorrectionLevel: 'L', color: { dark: '#0F172A', light: '#FFFFFF' } })
+      .then(url  => { if (active) setCertQrDataUrl(url); })
+      .catch(()  => { if (active) setCertQrDataUrl(''); });
+    return () => { active = false; };
+  }, [qrPayload]);
+
+  // --- Save to Firestore once (MUST be above early return) ---
+  useEffect(() => {
+    if (!lead.certId || !lead.uid || certSaved || !qrPayload) return;
+    saveCertificate({
+      uid: lead.uid, certId: lead.certId, name: lead.name, email: lead.email,
+      company: lead.company || '', assessmentType: type, score, maxScore: mx,
+      percentage: pct, grade: grade.grade, gradeLabel: grade.label,
+      answers, qrPayload, verifyUrl,
+    }).then(() => setCertSaved(true)).catch(console.error);
+  }, [lead.certId, lead.uid, qrPayload]);
+
+  // --- Loading spinner ---
+  if (loadingDb) {
+    return (
+      <Page style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 56px)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="loader" style={{ margin: '0 auto 16px' }} />
+          <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading certificate details...</div>
+        </div>
+      </Page>
+    );
+  }
+
 
   async function makeQRDataUrl(text, size) {
-    return QRCode.toDataURL(text, {
-      width: size,
-      margin: 1,
-      errorCorrectionLevel: 'H',
-      color: { dark: '#0F172A', light: '#FFFFFF' },
-    });
+    try {
+      return await QRCode.toDataURL(text, {
+        width: 400,
+        margin: 4,
+        errorCorrectionLevel: 'M',
+        color: { dark: '#000000', light: '#FFFFFF' },
+      });
+    } catch (e) {
+      console.error("QR Code Generation failed inside makeQRDataUrl:", e);
+      return '';
+    }
   }
 
   function buildReportHtml() {
@@ -422,21 +736,48 @@ function ResultsPage() {
   }
 
   async function buildCertHtml() {
-    const qrDataUrl = verifyUrl ? await makeQRDataUrl(verifyUrl, 200) : '';
-    return `<div style="border:2px solid #0EA5E9; border-radius:20px; padding:50px 40px; text-align:center; color:#fff; max-width:700px; margin:0 auto; font-family:'DM Sans', sans-serif;">
-      <div style="font-size:12px; letter-spacing:.12em; color:#38BDF8; text-transform:uppercase; margin-bottom:12px;">Hackers InfoTech - Official Certificate</div>
-      <div style="font-size:30px; font-weight:700; color:#F0F9FF; margin-bottom:4px;">Cyber Hygiene Assessment</div>
-      <div style="color:#64748B; margin-bottom:32px; font-size:13px;">Certificate of Completion</div>
-      <div style="font-size:14px; color:#94A3B8; margin-bottom:6px;">This certifies that</div>
-      <div style="font-size:28px; font-weight:700; color:#38BDF8; margin-bottom:4px;">${escHtml(lead.name)}</div>
-      ${lead.company ? `<div style="font-size:13px; color:#64748B; margin-bottom:24px;">${escHtml(lead.company)}</div>` : ''}
-      <div style="font-size:13px; color:#94A3B8; margin-bottom:16px;">has completed the Cyber Hygiene Assessment and achieved the grade</div>
-      <div style="font-size:96px; font-weight:700; color:${grade.color}; line-height:1; font-family:'DM Mono', monospace;">${grade.grade}</div>
-      <div style="font-size:20px; font-weight:600; color:#F0F9FF; margin:8px 0 4px;">${grade.label}</div>
+    // --- BUG 1 FIX: GUARANTEE QR DATA URL VALUE ---
+    let qrDataUrl = certQrDataUrl;
+    
+    // If the React state hasn't finished compiling yet (fast click), force-generate it synchronously right now
+    if (!qrDataUrl && qrPayload) {
+      try {
+        qrDataUrl = await QRCode.toDataURL(qrPayload, { 
+          width: 160, 
+          margin: 1, 
+          errorCorrectionLevel: 'L', 
+          color: { dark: '#0F172A', light: '#FFFFFF' } 
+        });
+      } catch (e) {
+        console.error("Inline QR matrix compilation failed:", e);
+      }
+    }
+    
+    // --- BUG 2 FIX: REMOVE max-width:760px AND EXTEND TO 100% ---
+    // This allows the certificate layout to spread perfectly over the 1123px landscape space
+    return `<div style="width:100%; height:100%; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
+      <div style="border:4px double #0EA5E9; border-radius:20px; padding:30px 40px; text-align:center; color:#fff; width:100%; flex:1; font-family:Arial,sans-serif; box-sizing:border-box; background:#0C1B2E; display:flex; flex-direction:column; justify-content:center; margin-bottom: 20px;">
+      <div style="font-size:14px; letter-spacing:.12em; color:#38BDF8; text-transform:uppercase; margin-bottom:8px;">Hackers InfoTech - Official Certificate</div>
+      <div style="font-size:36px; font-weight:700; color:#F0F9FF; margin-bottom:8px;">Cyber Hygiene Assessment</div>
+      <div style="color:#64748B; margin-bottom:16px; font-size:14px;">Certificate of Completion</div>
+      <div style="font-size:16px; color:#94A3B8; margin-bottom:6px;">This certifies that</div>
+      <div style="font-size:32px; font-weight:700; color:#38BDF8; margin-bottom:4px;">${escHtml(lead.name)}</div>
+      ${lead.company ? `<div style="font-size:14px; color:#64748B; margin-bottom:12px;">${escHtml(lead.company)}</div>` : ''}
+      <div style="font-size:14px; color:#94A3B8; margin-bottom:12px;">has completed the Cyber Hygiene Assessment and achieved the grade</div>
+      <div style="font-size:80px; font-weight:700; color:${grade.color}; line-height:1; font-family:monospace;">${grade.grade}</div>
+      <div style="font-size:20px; font-weight:600; color:#F0F9FF; margin:6px 0 4px;">${grade.label}</div>
       <div style="font-size:22px; color:${grade.color}; font-weight:700; margin-bottom:4px;">${pct}% (${score}/${mx} pts)</div>
-      <div style="color:#475569; font-size:12px; margin-bottom:28px;">Assessed on ${date}</div>
-      ${qrDataUrl ? `<div style="background:#0A1628; border:1px solid #1E3050; border-radius:14px; padding:20px; margin-bottom:28px; display:inline-flex; flex-direction:column; align-items:center; gap:10px;"><img src="${qrDataUrl}" width="130" height="130" style="border-radius:8px; display:block;" /><div style="color:#94A3B8; font-size:10px; letter-spacing:.06em; text-transform:uppercase;">Scan to verify</div><div style="color:#38BDF8; font-family:monospace; font-size:11px; font-weight:700;">${escHtml(lead.certId)}</div></div>` : ''}
-      <div style="border-top:1px solid #1E3050; padding-top:18px; display:flex; justify-content:space-between; font-size:11px; color:#475569;"><span>${BRAND.url}</span><span>${BRAND.email}</span><span>${BRAND.city}</span></div>
+      <div style="color:#475569; font-size:14px; margin-bottom:16px;">Assessed on ${date} at ${time}</div>
+      
+      ${qrDataUrl ? `<div style="background:#FFFFFF; border:2px solid #E2E8F0; border-radius:12px; padding:8px 12px; display:inline-flex; flex-direction:column; align-items:center; gap:6px; margin: 0 auto;">
+        <img src="${qrDataUrl}" width="100" height="100" style="display:block;" />
+        <div style="color:#0F172A; font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:700;">Scan to verify</div>
+        <div style="color:#0EA5E9; font-family:monospace; font-size:11px; font-weight:700;">${escHtml(certId)}</div>
+      </div>` : `<div style="color:#EF4444; font-size:12px;">QR code unavailable</div>`}
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; font-family:Arial,sans-serif; box-sizing:border-box;">
+        <span>${BRAND.url}</span><span>${BRAND.email}</span><span>${BRAND.city}</span>
+      </div>
     </div>`;
   }
 
@@ -448,23 +789,133 @@ function ResultsPage() {
       return;
     }
     setBusy(which);
-    const el = which === 'cert' ? pdfCertRef.current : pdfReportRef.current;
-    el.innerHTML = which === 'cert' ? await buildCertHtml() : buildReportHtml();
-    el.style.display = 'block';
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    
+    // Create a fresh off-document container
+    const el = document.createElement('div');
+    
+    // Enforce matching container dimensions based on the document type
+    // Certificate requires wide landscape boundaries; Report uses standard portrait width
+    const isCert = which === 'cert';
+    const widthPx = isCert ? 1123 : 794;  // 1123px matches A4 landscape at 96 DPI
+    const heightPx = isCert ? 794 : 1123; // 1123px matches A4 portrait at 96 DPI
+    
+    el.style.cssText = `
+      position: absolute; 
+      top: -20000px; 
+      left: 0; 
+      width: ${widthPx}px; 
+      height: ${heightPx}px;
+      box-sizing: border-box;
+      overflow: hidden;
+      background: ${isCert ? '#0C1B2E' : '#ffffff'};
+      padding: ${isCert ? '60px 50px' : '40px 30px'};
+      color: ${isCert ? '#fff' : '#000'};
+    `;
+    document.body.appendChild(el);
+    
     try {
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: which === 'cert' ? '#0C1B2E' : '#ffffff' });
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const width = pdf.internal.pageSize.getWidth();
-      const height = (canvas.height * width) / canvas.width;
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, width, height);
-      pdf.save(which === 'cert' ? `${lead.name}_Certificate.pdf` : `${lead.name}_CyberReport.pdf`);
+      el.innerHTML = isCert ? await buildCertHtml() : buildReportHtml();
+      
+      // Wait for all images (QR codes) to signal structural completion and FORCE decoding
+      const images = Array.from(el.querySelectorAll('img'));
+      await Promise.all(images.map(async (img) => {
+        try {
+          if (!img.complete) {
+            await new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+            });
+          }
+          // Explicitly force the browser to decode the Base64 image payload into memory
+          // This prevents html2canvas from capturing a blank box if the browser deferred rendering it off-screen
+          await img.decode();
+        } catch (e) {
+          console.warn("Image decode failed, continuing anyway", e);
+        }
+      }));
+
+      // THE CRITICAL PAINT TICK
+      // Forces the browser main thread to pause for 400 milliseconds.
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      
+      const canvas = await html2canvas(el, {
+        scale: 3, // 3x scale for ~300 DPI print quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: isCert ? '#0C1B2E' : '#ffffff',
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+      });
+
+      // MATCH PDF ORIENTATION TO DOCUMENT TYPE
+      // Certificate must be landscape ('l'), Report must be portrait ('p')
+      const pdf = new jsPDF({ 
+        orientation: isCert ? 'l' : 'p', 
+        unit: 'mm', 
+        format: 'a4' 
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();   // 297mm for Landscape, 210mm for Portrait
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 210mm for Landscape, 297mm for Portrait
+      
+      // Render the high-resolution canvas snapshot perfectly across the entire page canvas
+      pdf.addImage(
+        canvas.toDataURL('image/png'), 
+        'PNG', 
+        0, 
+        0, 
+        pdfWidth, 
+        pdfHeight, 
+        undefined, 
+        'FAST'
+      );
+      
+      const fileName = isCert ? `${lead.name}_Certificate.pdf` : `${lead.name}_CyberReport.pdf`;
+      pdf.save(fileName);
+
     } catch (error) {
-      console.error(error);
-      alert('Error generating PDF.');
+      console.error("PDF generation pipeline failed:", error);
+      alert('Error generating PDF. Please try again.');
     } finally {
-      el.style.display = 'none';
+      // Clean up the DOM node element to prevent severe web app memory leaks
+      if (el && el.parentNode) {
+        el.parentNode.removeChild(el);
+      }
       setBusy('');
+    }
+  }
+
+  function handleCopyVerifyLink() {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(verifyUrl).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch((err) => {
+        console.error('Copy failed', err);
+        fallbackCopy(verifyUrl);
+      });
+    } else {
+      fallbackCopy(verifyUrl);
+    }
+  }
+
+  function fallbackCopy(text) {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      textArea.remove();
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      alert('Failed to copy. Please manually copy this link:\n' + text);
     }
   }
 
@@ -491,7 +942,8 @@ function ResultsPage() {
 
   return (
     <>
-      <Page style={{ paddingTop: 36 }}>
+      {queryId && <Nav />}
+      <Page style={{ paddingTop: queryId ? 36 : 36 }}>
         <div className="card" style={{ background: grade.bg, borderColor: `${grade.color}33`, textAlign: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: grade.color, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 10 }}>Cyber Safety Grade · {date}</div>
           <div style={{ fontSize: 88, fontWeight: 700, color: grade.color, lineHeight: 1, fontFamily: "'DM Mono', monospace" }}>{grade.grade}</div>
@@ -502,33 +954,96 @@ function ResultsPage() {
         </div>
 
         <div className="card" style={{ marginBottom: 20 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 16px' }}>📄 Your Certificate & Report</h3>
-          <div style={{ background: 'var(--bg-color)', border: '1px dashed var(--border-color)', borderRadius: 12, padding: 16, marginBottom: 14, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ background: '#fff', padding: 10, borderRadius: 10, flexShrink: 0, width: 120, minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {certQrDataUrl ? <img src={certQrDataUrl} alt="Certificate verification QR code" width="100" height="100" style={{ display: 'block' }} /> : <span style={{ color: '#64748B', fontSize: 11 }}>QR loading...</span>}
+          <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 16px' }}>📄 Your Official Certificate</h3>
+          
+          {/* Inline Certificate Preview */}
+          {certQrDataUrl ? (
+            <div style={{ background: '#0C1B2E', border: '2px solid #0EA5E9', borderRadius: 20, padding: '30px 20px', textAlign: 'center', color: '#fff', marginBottom: 20, fontFamily: 'Arial, sans-serif' }}>
+              <div style={{ fontSize: 10, letterSpacing: '.12em', color: '#38BDF8', textTransform: 'uppercase', marginBottom: 10 }}>Hackers InfoTech - Official Certificate</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#F0F9FF', marginBottom: 4 }}>Cyber Hygiene Assessment</div>
+              <div style={{ color: '#64748B', marginBottom: 24, fontSize: 11 }}>Certificate of Completion</div>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 4 }}>This certifies that</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#38BDF8', marginBottom: 2 }}>{lead.name}</div>
+              {lead.company && <div style={{ fontSize: 11, color: '#64748B', marginBottom: 16 }}>{lead.company}</div>}
+              <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 12, marginTop: lead.company ? 0 : 12 }}>has completed the Cyber Hygiene Assessment and achieved the grade</div>
+              <div style={{ fontSize: 72, fontWeight: 700, color: grade.color, lineHeight: 1, fontFamily: 'monospace' }}>{grade.grade}</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#F0F9FF', margin: '6px 0 4px' }}>{grade.label}</div>
+              <div style={{ fontSize: 18, color: grade.color, fontWeight: 700, marginBottom: 4 }}>{pct}% ({score}/{mx} pts)</div>
+              <div style={{ color: '#475569', fontSize: 11, marginBottom: 20 }}>Assessed on {date}</div>
+              
+              <div style={{ background: '#FFFFFF', border: '2px solid #E2E8F0', borderRadius: 12, padding: 12, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginBottom: 20 }}>
+                <img src={certQrDataUrl} width="100" height="100" style={{ display: 'block' }} alt="Verify QR" />
+                <div style={{ color: '#0F172A', fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', fontWeight: 700 }}>Scan to verify</div>
+                <div style={{ color: '#0EA5E9', fontFamily: 'monospace', fontSize: 11, fontWeight: 700 }}>{certId}</div>
+              </div>
+              
+              <div style={{ borderTop: '1px solid #1E3050', paddingTop: 14, display: 'flex', justifyContent: 'center', gap: 16, fontSize: 10, color: '#475569', flexWrap: 'wrap' }}>
+                <span>{BRAND.url}</span>
+                <span>{BRAND.email}</span>
+              </div>
             </div>
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Certificate ID</div>
-              <div style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: 'var(--primary-color)', wordBreak: 'break-all', marginBottom: 8 }}>{lead.certId || 'Not available'}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>Scan the QR code to verify this certificate's authenticity instantly.</div>
-              <button type="button" onClick={() => navigator.clipboard.writeText(verifyUrl)} style={{ marginTop: 8, background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', color: 'var(--text-primary)' }}>🔗 Copy Verify Link</button>
+          ) : (
+            <div style={{ background: '#0C1B2E', borderRadius: 20, padding: '50px 20px', textAlign: 'center', marginBottom: 20 }}>
+              <div className="loader" style={{ margin: '0 auto 16px', borderColor: '#38BDF8 transparent #38BDF8 transparent' }} />
+              <div style={{ color: '#94A3B8', fontSize: 12 }}>Generating certificate and QR code...</div>
             </div>
-          </div>
+          )}
           <div className="grid-2" style={{ marginBottom: 14 }}>
             <button type="button" onClick={() => downloadPdf('cert')} disabled={busy === 'cert'} style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#7C3AED', cursor: 'pointer' }}>{busy === 'cert' ? '⏳ Generating...' : '🏅 Download Certificate'}</button>
             <button type="button" onClick={() => downloadPdf('report')} disabled={busy === 'report'} style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer' }}>{busy === 'report' ? '⏳ Generating...' : '📋 Download Full Report'}</button>
           </div>
-          <button type="button" onClick={sendEmail} style={{ width: '100%', background: emailState === 'sent' ? '#ECFDF5' : 'var(--primary-color)', border: emailState === 'sent' ? '1px solid #A7F3D0' : 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, color: emailState === 'sent' ? '#059669' : '#fff', cursor: 'pointer' }}>
+          <button type="button" onClick={sendEmail} style={{ width: '100%', background: emailState === 'sent' ? '#ECFDF5' : 'var(--primary-color)', border: emailState === 'sent' ? '1px solid #A7F3D0' : 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, color: emailState === 'sent' ? '#059669' : '#fff', cursor: 'pointer', marginBottom: 14 }}>
             {emailState === 'sending' ? '⏳ Sending...' : emailState === 'sent' ? `✅ Report sent to ${lead.email}` : emailState === 'failed' ? '❌ Send failed. Check config.' : `📧 Email Report to ${lead.email}`}
           </button>
+          
+          {/* Social Share */}
+          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>🌐 Share Your Achievement</div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {/* LinkedIn */}
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(verifyUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0A66C2', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                LinkedIn
+              </a>
+              {/* WhatsApp */}
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`🎓 I just completed the Cyber Hygiene Assessment by Hackers InfoTech and scored ${grade.grade} (${pct}%)!\n\nVerify my certificate here: ${verifyUrl}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                WhatsApp
+              </a>
+              {/* Twitter / X */}
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`🎓 I scored ${grade.grade} (${pct}%) on the Cyber Hygiene Assessment by @HackersInfoTech!\n\nVerify my certificate:`)}&url=${encodeURIComponent(verifyUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#000', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.763l7.724-8.833L1.5 2.25h6.312l4.261 5.631zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                X (Twitter)
+              </a>
+            </div>
+          </div>
         </div>
 
         <CategoryBreakdown sections={sections} answers={answers} />
         {failed.length > 0 && <ActionPlan failed={failed} />}
-        <ConsultationCta />
+        <ConsultationCta isHistoryView={!!queryId} />
       </Page>
-      <div ref={pdfCertRef} style={{ display: 'none', position: 'fixed', top: 0, left: 0, width: 794, zIndex: -999, background: '#0C1B2E', padding: '60px 40px', boxSizing: 'border-box' }} />
-      <div ref={pdfReportRef} style={{ display: 'none', position: 'fixed', top: 0, left: 0, width: 794, zIndex: -999, background: '#fff', padding: '40px 30px', boxSizing: 'border-box', color: '#000' }} />
     </>
   );
 }
@@ -574,14 +1089,18 @@ function ActionPlan({ failed }) {
   );
 }
 
-function ConsultationCta() {
+function ConsultationCta({ isHistoryView }) {
   return (
     <div style={{ background: '#0C1B2E', borderRadius: 16, padding: '28px 24px', textAlign: 'center' }}>
-      <div style={{ fontSize: 15, fontWeight: 600, color: '#F0F9FF', marginBottom: 8 }}>Want Hackers InfoTech to fix this for you?</div>
-      <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 22, lineHeight: 1.7 }}>Book a free 30-minute consultation. We will walk through your results and create a personalised cyber security plan.</div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: '#F0F9FF', margin: '0 0 8px' }}>Want Hackers InfoTech to fix this for you?</div>
+      <div style={{ fontSize: 13, color: '#94A3B8', margin: '0 0 22px', lineHeight: 1.7 }}>Book a free 30-minute consultation. We will walk through your results and create a personalised cyber security plan.</div>
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
         <a href={BRAND.bookingUrl} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ fontSize: 14, padding: '12px 24px' }}>📅 Book Free 30-Min Call</a>
-        <button type="button" onClick={() => navigateTo('/')} style={{ background: 'transparent', border: '1px solid #1E3050', color: '#94A3B8', borderRadius: 9, padding: '12px 24px', fontSize: 14, cursor: 'pointer' }}>Retake Assessment</button>
+        {isHistoryView ? (
+          <button type="button" onClick={() => history.back()} style={{ background: 'transparent', border: '1px solid #1E3050', color: '#94A3B8', borderRadius: 9, padding: '12px 24px', fontSize: 14, cursor: 'pointer' }}><i className="ti ti-arrow-left" style={{ marginRight: 4 }}/> Back</button>
+        ) : (
+          <button type="button" onClick={() => navigateTo('/')} style={{ background: 'transparent', border: '1px solid #1E3050', color: '#94A3B8', borderRadius: 9, padding: '12px 24px', fontSize: 14, cursor: 'pointer' }}>Retake Assessment</button>
+        )}
       </div>
       <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #1E3050', display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 12, color: '#64748B' }}>🌐 {BRAND.url}</span>
@@ -619,6 +1138,40 @@ function VerifyIdPage() {
     if (nextErrors.certId) return;
 
     setStatus({ type: '', text: 'Checking records...' });
+
+    // First try Firebase (works globally on any device)
+    try {
+      const fbCert = await getCertificate(trimmedId);
+      if (fbCert) {
+        if (trimmedName && fbCert.name && trimmedName.toLowerCase() !== fbCert.name.toLowerCase()) {
+          setStatus({ type: 'error', title: 'Verification Failed', text: 'Certificate ID found, but the entered name does not match this certificate.' });
+          return;
+        }
+        const issueDate = fbCert.issuedAt?.toDate
+          ? fbCert.issuedAt.toDate().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+          : 'On Record';
+        setWarning(false);
+        setStatus({
+          type: 'success',
+          title: 'Verification Successful',
+          text: 'Certificate record verified against the secure database.',
+          cert: {
+            name: fbCert.name || 'Not available',
+            id: fbCert.certId,
+            grade: fbCert.grade,
+            gradeLabel: fbCert.gradeLabel,
+            score: fbCert.score,
+            maxScore: fbCert.maxScore,
+            percentage: fbCert.percentage,
+            assessmentType: fbCert.assessmentType,
+            issueDate,
+          },
+        });
+        return;
+      }
+    } catch {}
+
+    // Fallback: localStorage
     const localCert = findCertificate(trimmedId);
     if (localCert) {
       if (trimmedName && localCert.name && trimmedName.toLowerCase() !== localCert.name.toLowerCase()) {
@@ -630,32 +1183,12 @@ function VerifyIdPage() {
         type: 'success',
         title: 'Verification Successful',
         text: 'Certificate record found in this browser registry.',
-        cert: { name: localCert.name || 'Not available', id: localCert.id, createdAt: localCert.createdAt },
+        cert: { name: localCert.name || 'Not available', id: localCert.id },
       });
       return;
     }
 
-    if (!(await checkDB())) {
-      setStatus({ type: 'error', title: 'Certificate Not Found', text: 'This certificate ID was not found in the local registry. Start the backend server to check server records.' });
-      return;
-    }
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/verify/${encodeURIComponent(trimmedId)}/?name=${encodeURIComponent(trimmedName)}`);
-      const data = await response.json();
-      setStatus(response.ok
-        ? { type: 'success', title: 'Verification Successful', text: data.message, cert: { name: data.name || trimmedName || 'Verified user', id: trimmedId } }
-        : { type: 'error', title: 'Verification Failed', text: data.message || 'Details do not match our secure records.' });
-    } catch {
-      setStatus({ type: 'error', title: 'Connection Error', text: 'Could not reach verification server. Ensure the backend is running.' });
-    }
-    return;
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/verify/${encodeURIComponent(trimmedId)}/?name=${encodeURIComponent(trimmedName)}`);
-      const data = await response.json();
-      setStatus(response.ok ? { type: 'success', title: '✅ Verification Successful', text: data.message } : { type: 'error', title: '❌ Verification Failed', text: data.message || 'Details do not match our secure records.' });
-    } catch {
-      setStatus({ type: 'error', title: '⚠️ Connection Error', text: 'Could not reach verification server. Ensure the backend is running.' });
-    }
+    setStatus({ type: 'error', title: 'Certificate Not Found', text: 'This certificate ID was not found in our records. Please check the ID and try again.' });
   }
 
   return (
@@ -677,11 +1210,20 @@ function VerifyIdPage() {
               <div style={{ fontWeight: 700, marginBottom: 4, textAlign: 'center' }}>{status.title || status.text}</div>
               {status.title && <div style={{ fontSize: 13, opacity: 0.9, textAlign: 'center', marginBottom: status.cert ? 12 : 0 }}>{status.text}</div>}
               {status.cert && (
-                <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 10, padding: 12 }}>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>User Name</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>{status.cert.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Certificate ID</div>
-                  <div style={{ fontSize: 13, fontFamily: 'DM Mono, monospace', fontWeight: 700, color: 'var(--primary-color)', wordBreak: 'break-all' }}>{status.cert.id}</div>
+                <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[
+                    { label: 'Recipient Name', value: status.cert.name },
+                    { label: 'Certificate ID', value: status.cert.id, mono: true },
+                    status.cert.grade && { label: 'Grade', value: `${status.cert.grade} — ${status.cert.gradeLabel || ''}` },
+                    status.cert.percentage != null && { label: 'Score', value: `${status.cert.percentage}%  (${status.cert.score}/${status.cert.maxScore} pts)` },
+                    status.cert.assessmentType && { label: 'Assessment Type', value: status.cert.assessmentType === 'it' ? 'IT Professional' : 'General Public' },
+                    status.cert.issueDate && { label: 'Issue Date', value: status.cert.issueDate },
+                  ].filter(Boolean).map(({ label, value, mono }) => (
+                    <div key={label}>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 2 }}>{label}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: mono ? 'DM Mono, monospace' : 'inherit', wordBreak: 'break-all' }}>{value}</div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -705,14 +1247,47 @@ function VerifyInput({ label, value, setValue, error, errorText, placeholder }) 
 
 function CertDetailsPage() {
   const params = new URLSearchParams(window.location.search);
-  const certId = params.get('id');
-  const name = params.get('name');
+  const rawId = params.get('id');
+  const rawName = params.get('name');
   const [loading, setLoading] = useState(true);
+  const [cert, setCert] = useState(null);
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
+    async function lookup() {
+      // Parse QR JSON payload if present
+      let parsedQR = null;
+      try { parsedQR = parseQRPayload(decodeURIComponent(rawId || '')); } catch {}
+
+      const resolvedId = parsedQR?.id || rawId;
+      const resolvedName = parsedQR?.n || rawName;
+
+      // 1. Try Firestore first (works on ANY device globally)
+      let found = null;
+      try { found = await getCertificate(resolvedId); } catch {}
+
+      // 2. Fallback to localStorage (same browser only)
+      if (!found) found = findCertificate(resolvedId);
+
+      if (found) {
+        setCert({ ...found, qrGrade: parsedQR?.g, qrScore: parsedQR?.s, qrPct: parsedQR?.p, qrDate: parsedQR?.d });
+        setVerified(true);
+      } else if (resolvedId) {
+        setCert({ id: resolvedId, name: resolvedName, createdAt: null, qrGrade: parsedQR?.g, qrScore: parsedQR?.s, qrPct: parsedQR?.p, qrDate: parsedQR?.d });
+        setVerified(false);
+      }
+      setLoading(false);
+    }
+    lookup();
+  }, [rawId, rawName]);
+
+  const displayName = cert?.name || rawName || 'Unknown';
+  const displayId = cert?.id || rawId || '';
+  const issueDate = cert?.issuedAt?.toDate
+    ? cert.issuedAt.toDate().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+    : cert?.createdAt
+      ? new Date(cert.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+      : (cert?.qrDate || 'On Record');
 
   return (
     <>
@@ -722,9 +1297,9 @@ function CertDetailsPage() {
           {loading ? (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <div className="loader" />
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Loading certificate...</div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Verifying certificate...</div>
             </div>
-          ) : !certId || !name ? (
+          ) : !displayId ? (
             <div style={{ textAlign: 'center' }}>
               <div className="error-icon"><i className="ti ti-link-off" /></div>
               <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Invalid Certificate Link</div>
@@ -733,15 +1308,56 @@ function CertDetailsPage() {
             </div>
           ) : (
             <>
-              <div className="cert-badge"><i className="ti ti-certificate" /></div>
-              <div className="cert-issued">Hackers InfoTech - Official Certificate</div>
-              <div className="cert-title">Cyber Hygiene Assessment</div>
-              <div className="info-block">
-                <div className="info-row"><div className="info-icon blue"><i className="ti ti-user" /></div><div className="info-text"><div className="info-label">Recipient Name</div><div className="info-value">{name}</div></div></div>
-                <div className="info-row"><div className="info-icon green"><i className="ti ti-id" /></div><div className="info-text"><div className="info-label">Certificate ID</div><div className="info-value mono">{certId}</div></div></div>
+              <div className="cert-badge" style={{ background: verified ? 'rgba(5,150,105,0.12)' : 'rgba(56,189,248,0.12)', borderColor: verified ? 'rgba(5,150,105,0.3)' : 'rgba(56,189,248,0.3)', color: verified ? '#059669' : '#0EA5E9' }}>
+                <i className={`ti ti-${verified ? 'shield-check' : 'certificate'}`} />
               </div>
-              <div className="issued-by">This certificate was issued by <strong>Hackers InfoTech</strong>, Coimbatore, India - an ISO 9001:2015 certified cybersecurity company.</div>
-              <Link href="/" className="btn-home"><i className="ti ti-home" /> Back to Home</Link>
+              <div className="cert-issued">Hackers InfoTech — Official Certificate</div>
+              <div className="cert-title">Cyber Hygiene Assessment</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: verified ? '#ECFDF5' : '#FFF7ED', border: `1px solid ${verified ? '#6EE7B7' : '#FED7AA'}`, borderRadius: 20, padding: '5px 14px', fontSize: 12, fontWeight: 700, color: verified ? '#059669' : '#B45309', marginBottom: 20 }}>
+                <i className={`ti ti-${verified ? 'circle-check' : 'alert-circle'}`} />
+                {verified ? 'Verified' : 'Certificate Presented (QR Data)'}
+              </div>
+              <div className="info-block">
+                <div className="info-row">
+                  <div className="info-icon blue"><i className="ti ti-user" /></div>
+                  <div className="info-text">
+                    <div className="info-label">Recipient Name</div>
+                    <div className="info-value">{displayName}</div>
+                  </div>
+                </div>
+                <div className="info-row">
+                  <div className="info-icon green"><i className="ti ti-id" /></div>
+                  <div className="info-text">
+                    <div className="info-label">Certificate ID</div>
+                    <div className="info-value mono">{displayId}</div>
+                  </div>
+                </div>
+                {(cert?.qrGrade || cert?.qrPct) && (
+                  <div className="info-row">
+                    <div className="info-icon blue"><i className="ti ti-award" /></div>
+                    <div className="info-text">
+                      <div className="info-label">Grade / Score</div>
+                      <div className="info-value">{cert.qrGrade} — {cert.qrPct} ({cert.qrScore})</div>
+                    </div>
+                  </div>
+                )}
+                <div className="info-row">
+                  <div className="info-icon blue"><i className="ti ti-calendar" /></div>
+                  <div className="info-text">
+                    <div className="info-label">Issue Date</div>
+                    <div className="info-value">{issueDate}</div>
+                  </div>
+                </div>
+                <div className="info-row">
+                  <div className="info-icon green"><i className="ti ti-building" /></div>
+                  <div className="info-text">
+                    <div className="info-label">Issued By</div>
+                    <div className="info-value">Hackers InfoTech</div>
+                  </div>
+                </div>
+              </div>
+              <div className="issued-by">This certificate was issued by <strong>Hackers InfoTech</strong>, Coimbatore, India — an ISO 9001:2015 certified cybersecurity company.</div>
+              <Link href={`/html/results.html?id=${encodeURIComponent(displayId)}`} className="btn-home"><i className="ti ti-certificate" /> View Full Certificate</Link>
             </>
           )}
         </div>
@@ -824,7 +1440,16 @@ function CertGeneratePage() {
       setOutputQrDataUrl('');
       return undefined;
     }
-    QRCode.toDataURL(output.verifyUrl, {
+    const payload = buildQRPayload({
+      certId: output.certId,
+      name: output.name,
+      grade: output.grade || 'N/A',
+      score: 'N/A',
+      pct: 'N/A',
+      date: output.date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }),
+      issuer: BRAND.name,
+    });
+    QRCode.toDataURL(payload, {
       width: 200,
       margin: 1,
       errorCorrectionLevel: 'H',
@@ -852,7 +1477,11 @@ function CertGeneratePage() {
     const nextStore = readJson(CERT_STORE_KEY, {});
     nextStore[certId.trim()] = { hash, createdAt: new Date().toISOString(), name: name.trim() };
     localStorage.setItem(CERT_STORE_KEY, JSON.stringify(nextStore));
-    setOutput({ name: name.trim(), certId: certId.trim(), hash, verifyUrl });
+    setOutput({
+      name: name.trim(), certId: certId.trim(), hash, verifyUrl,
+      grade: 'N/A',
+      date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }),
+    });
     setStoreTick((tick) => tick + 1);
   }
 
@@ -927,92 +1556,17 @@ function GenField({ label, value, setValue, error, errorText, placeholder }) {
 }
 
 function ScannerPage() {
-  const [tabName, setTabName] = useState('camera');
   const [status, setStatus] = useState({ state: '', label: 'Idle' });
-  const [warning, setWarning] = useState(false);
-  const [hint, setHint] = useState('Tap "Start Camera" to begin. Allow camera permission when prompted.');
-  const [cameraState, setCameraState] = useState('off');
-  const [preview, setPreview] = useState('');
   const [uploaded, setUploaded] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [lastResult, setLastResult] = useState(null);
-  const [multiCam, setMultiCam] = useState(false);
-  const streamRef = useRef(null);
-  const facingRef = useRef('environment');
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
-
-  useEffect(() => () => stopCamera(), []);
-
-  async function checkDB() {
-    setWarning(false);
-    try {
-      const response = await fetch('http://127.0.0.1:8000/health/');
-      if (!response.ok) throw new Error();
-      return true;
-    } catch {
-      setWarning(true);
-      return false;
-    }
-  }
-
-  async function startCamera() {
-    try {
-      stopCamera();
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingRef.current, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
-      streamRef.current = stream;
-      videoRef.current.srcObject = stream;
-      setCameraState('live');
-      setPreview('');
-      setLastResult(null);
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      setMultiCam(devices.filter((device) => device.kind === 'videoinput').length > 1);
-      setHint('Position the certificate inside the frame, then tap Capture.');
-      setStatus({ state: 'active', label: 'Camera Live' });
-    } catch {
-      setHint('Camera access denied. Please allow camera permission in your browser settings and try again.');
-      setStatus({ state: 'error', label: 'Blocked' });
-    }
-  }
-
-  function stopCamera() {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) videoRef.current.srcObject = null;
-    setCameraState('off');
-    setHint('Tap "Start Camera" to begin. Allow camera permission when prompted.');
-    setStatus({ state: '', label: 'Idle' });
-  }
-
-  async function switchCamera() {
-    facingRef.current = facingRef.current === 'environment' ? 'user' : 'environment';
-    await startCamera();
-  }
-
-  function captureFrame() {
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    const imageData = canvas.toDataURL('image/jpeg', 0.92);
-    setPreview(imageData);
-    setCameraState('captured');
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    setHint('Image captured. Analyzing...');
-    analyzeCertificate(imageData, 'camera');
-  }
 
   async function handleFile(file) {
     if (!file) return;
     setLastResult(null);
     setUploaded({ file, data: '', ready: false });
+    
     if (file.type === 'application/pdf') {
       setStatus({ state: 'active', label: 'Reading PDF' });
       try {
@@ -1042,7 +1596,62 @@ function ScannerPage() {
 
   async function analyzeUploaded() {
     if (!uploaded?.data) return;
-    analyzeCertificate(uploaded.data, 'upload');
+    setProcessing(true);
+    setStatus({ state: 'active', label: 'Analyzing QR Code' });
+    
+    const qrText = await decodeQrFromImage(uploaded.data);
+    const qrPayload = parseVerifyPayload(qrText);
+    
+    if (qrPayload?.id) {
+      // Check Firebase
+      try {
+        const certData = await getCertificate(qrPayload.id);
+        if (certData) {
+          setLastResult({
+             isValid: true,
+             certificateType: certData.assessmentType || 'Cyber Hygiene Assessment',
+             recipientName: certData.name,
+             issuer: BRAND.name,
+             issueDate: certData.issuedAt?.toDate ? certData.issuedAt.toDate().toLocaleDateString() : 'N/A',
+             credentialId: certData.certId,
+             grade: certData.gradeLabel || certData.grade,
+             verificationStatus: 'Verified',
+             notes: 'Certificate successfully verified against the database.'
+          });
+          setStatus({ state: 'done', label: 'Verified in Database' });
+        } else {
+          setLastResult({
+             isValid: false,
+             certificateType: '-',
+             recipientName: '-',
+             issuer: '-',
+             issueDate: '-',
+             credentialId: qrPayload.id,
+             grade: '-',
+             verificationStatus: 'Unverified',
+             notes: 'QR code read successfully, but no matching certificate was found in the database.'
+          });
+          setStatus({ state: 'error', label: 'Record Not Found' });
+        }
+      } catch (e) {
+        setStatus({ state: 'error', label: 'Database Error' });
+        alert('Error connecting to database to verify certificate.');
+      }
+    } else {
+      setLastResult({
+         isValid: false,
+         certificateType: '-',
+         recipientName: '-',
+         issuer: '-',
+         issueDate: '-',
+         credentialId: '-',
+         grade: '-',
+         verificationStatus: 'Error',
+         notes: 'No valid QR code was detected in the uploaded image. Please ensure the QR code is clearly visible.'
+      });
+      setStatus({ state: 'error', label: 'No QR Found' });
+    }
+    setProcessing(false);
   }
 
   function decodeQrFromImage(imageData) {
@@ -1063,75 +1672,26 @@ function ScannerPage() {
     });
   }
 
-  async function analyzeCertificate(imageData, source) {
-    setProcessing(true);
-    setStatus({ state: 'active', label: 'Analyzing' });
-    const qrText = await decodeQrFromImage(imageData);
-    const qrPayload = parseVerifyPayload(qrText);
-    if (qrPayload?.id) {
-      setLastResult(makeLocalVerificationResult(qrPayload.id, qrPayload.name));
-      setStatus({ state: 'done', label: 'QR Verified' });
-      setProcessing(false);
-      return;
-    }
-
-    const base64 = imageData.split(',')[1];
-    const mime = imageData.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-    const prompt = `You are an expert certificate scanner. Carefully analyze this certificate image and extract all visible information.
-Respond ONLY with a valid JSON object - no markdown fences, no preamble. Use exactly these keys:
-{"isValid": true, "certificateType": "type", "recipientName": "full name", "issuer": "issuer", "courseOrSubject": "course", "issueDate": "date", "expiryDate": "expiry or N/A", "credentialId": "certificate ID or N/A", "grade": "grade or N/A", "verificationStatus": "Verified or Unverified", "notes": "notes"}`;
+  function parseVerifyPayload(text) {
+    if (!text) return null;
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: mime, data: base64 } }, { type: 'text', text: prompt }] }] }),
-      });
-      const data = await response.json();
-      const text = (data.content || []).map((block) => block.text || '').join('');
-      let result;
-      try {
-        result = JSON.parse(text.replace(/```json|```/g, '').trim());
-      } catch {
-        result = { isValid: false, certificateType: 'Parse Error', recipientName: 'N/A', issuer: 'N/A', courseOrSubject: 'N/A', issueDate: 'N/A', expiryDate: 'N/A', credentialId: 'N/A', grade: 'N/A', verificationStatus: 'Unverified', notes: text || 'Could not parse the response.' };
+      const parsed = JSON.parse(text);
+      if (parsed.t === 'hit-cert' && parsed.d?.id) {
+        return { id: parsed.d.id, name: parsed.d.n, payload: parsed.d };
       }
-      setLastResult(result);
-      setStatus({ state: result.isValid && result.verificationStatus === 'Verified' ? 'done' : '', label: result.isValid ? 'Complete' : 'Done' });
     } catch {
-      setLastResult({ isValid: false, certificateType: 'Error', recipientName: '-', issuer: '-', courseOrSubject: '-', issueDate: '-', expiryDate: '-', credentialId: '-', grade: '-', verificationStatus: 'Error', notes: 'Could not reach analysis service. Check your internet connection and try again.' });
-      setStatus({ state: 'error', label: 'Error' });
-    } finally {
-      setProcessing(false);
+      // Not JSON
     }
-  }
-
-  function downloadResult() {
-    if (!lastResult) return;
-    const lines = ['CERTIFICATE SCAN REPORT', '========================', `Generated : ${new Date().toLocaleString()}`, '', ...Object.entries(lastResult).map(([key, value]) => `${key.padEnd(22)}: ${value}`)].join('\n');
-    const blob = new Blob([lines], { type: 'text/plain' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `certificate_scan_${Date.now()}.txt`;
-    link.click();
-  }
-
-  async function secureDatabaseVerify() {
-    if (!lastResult?.credentialId || !lastResult?.recipientName) {
-      alert('Could not find enough info for secure verification. Please try a clearer scan.');
-      return;
-    }
-    const localCert = findCertificate(lastResult.credentialId);
-    if (localCert) {
-      setLastResult(makeLocalVerificationResult(localCert.id, localCert.name));
-      alert(`Verified: ${localCert.name || 'User'} (${localCert.id})`);
-      return;
-    }
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/verify/${encodeURIComponent(lastResult.credentialId)}/?name=${encodeURIComponent(lastResult.recipientName)}`);
-      const data = await response.json();
-      alert(`${data.status === 'verified' ? '✅' : '❌'} ${data.message || 'Verification Failed'}`);
-    } catch {
-      alert('❌ Error connecting to verification server. Please ensure the Django backend is running.');
-    }
+    
+    // Match legacy URL format (e.g. ?id=HIT-1234)
+    let match = text.match(/id=([^&\s]+)/i);
+    if (match) return { id: decodeURIComponent(match[1]) };
+    
+    // Match new plain text format (e.g. ID: HIT-1234)
+    match = text.match(/ID:\s*([A-Za-z0-9\-]+)/i);
+    if (match) return { id: match[1].trim() };
+    
+    return null;
   }
 
   const verified = lastResult?.isValid && lastResult?.verificationStatus === 'Verified';
@@ -1139,12 +1699,9 @@ Respond ONLY with a valid JSON object - no markdown fences, no preamble. Use exa
     ['Certificate Type', lastResult.certificateType],
     ['Recipient Name', lastResult.recipientName],
     ['Issued By', lastResult.issuer],
-    ['Course / Subject', lastResult.courseOrSubject],
     ['Issue Date', lastResult.issueDate],
-    ['Expiry Date', lastResult.expiryDate],
     ['Credential ID', lastResult.credentialId],
     ['Grade / Score', lastResult.grade],
-    ['Notes', lastResult.notes],
   ].filter(([, value]) => value && !['N/A', 'Not found', '-'].includes(value)) : [];
 
   return (
@@ -1152,48 +1709,101 @@ Respond ONLY with a valid JSON object - no markdown fences, no preamble. Use exa
       <Nav />
       <div className="container fade-in scanner-page">
         <div className="scanner-container">
-          {warning && <div className="db-warning"><i className="ti ti-alert-triangle" /> Database Server is Offline. Verification may not work.</div>}
           <div className="scanner-header"><div className="logo-group"><div className="scanner-logo-icon"><i className="ti ti-certificate" /></div><div><div className="logo-title">Certificate Verification</div></div></div><span className={`status-badge ${status.state}`}><span className={`dot${status.state === 'active' ? ' pulse' : ''}`} /> {status.label}</span></div>
-          <div className="tabs"><button className={`tab ${tabName === 'camera' ? 'active' : ''}`} type="button" onClick={() => { setTabName('camera'); setLastResult(null); }}><i className="ti ti-camera" /> Camera</button><button className={`tab ${tabName === 'upload' ? 'active' : ''}`} type="button" onClick={() => { setTabName('upload'); setLastResult(null); }}><i className="ti ti-upload" /> Upload Image</button></div>
+          
+          <div>
+            {!uploaded?.ready && (
+              <>
+                <div className="upload-zone" onClick={() => fileInputRef.current.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFile(event.dataTransfer.files[0]); }}><i className="ti ti-file-upload" /><h3>Drop certificate image here</h3><p>or click to browse - JPG, PNG supported</p></div>
+                <div style={{ textAlign: 'center', marginTop: 16 }}>
+                  <button type="button" className="btn" onClick={() => history.back()}><i className="ti ti-arrow-left" /> Back</button>
+                </div>
+              </>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={(event) => handleFile(event.target.files[0])} style={{ display: 'none' }} />
+            {uploaded?.ready && <div className="card" style={{ marginTop: 0, textAlign: 'center' }}><div style={{ marginBottom: 20 }}><span className="status-badge done"><i className="ti ti-check" /> File Ready for Analysis</span></div><div style={{ background: 'var(--bg-color)', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px dashed var(--border-color)' }}><img src={uploaded.data} alt="Uploaded certificate" style={{ maxHeight: 280, maxWidth: '100%', borderRadius: 8, display: 'block', margin: '0 auto' }} /><div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 12 }}><i className="ti ti-file" /> {uploaded.file.name} - {(uploaded.file.size / 1024).toFixed(1)} KB</div></div><div className="controls"><Link href="/" className="btn"><i className="ti ti-arrow-left" /> Back to Home</Link><button className="btn primary" type="button" onClick={analyzeUploaded}><i className="ti ti-scan" /> Verify QR Code</button><button className="btn danger" type="button" onClick={() => { setUploaded(null); setLastResult(null); setStatus({ state: '', label: 'Idle' }); }}><i className="ti ti-trash" /> Clear</button></div></div>}
+            {processing && <div className="card processing" style={{ position: 'relative', minHeight: 120, borderRadius: 16, display: 'flex', marginTop: 16, background: 'var(--card-bg)' }}><div className="spinner" style={{ borderTopColor: 'var(--primary-color)' }} /><p style={{ color: 'var(--text-primary)', marginTop: 12 }}>Analyzing QR code...</p></div>}
+          </div>
 
-          {tabName === 'camera' && (
-            <div>
-              <div className="scanner-wrap card" style={{ padding: 0 }}>
-                {cameraState === 'off' && <div className="cam-placeholder"><i className="ti ti-camera-off" /><p>Camera is off.<br />Tap <strong>Start Camera</strong> to begin scanning.</p></div>}
-                <video ref={videoRef} autoPlay playsInline muted style={{ display: cameraState === 'live' ? 'block' : 'none' }} />
-                {preview && <img src={preview} alt="Captured certificate" id="preview-img" style={{ display: 'block' }} />}
-                {cameraState === 'live' && <div className="overlay-frame" style={{ display: 'block' }}><div className="corner c-tl" /><div className="corner c-tr" /><div className="corner c-bl" /><div className="corner c-br" /><div className="scan-line" /><div className="frame-hint">Align certificate within the frame</div></div>}
-                {processing && <div className="processing" style={{ display: 'flex' }}><div className="spinner" /><p>Analyzing certificate...</p></div>}
-              </div>
-              <div className="hint-bar"><i className="ti ti-info-circle" style={{ fontSize: 20, flexShrink: 0 }} /><span>{hint}</span></div>
-              <div className="controls"><Link href="/" className="back-btn"><i className="ti ti-arrow-left" /> Back to Home</Link>{cameraState !== 'live' && <button className="btn primary" type="button" onClick={startCamera}><i className="ti ti-camera" /> Start Camera</button>}{cameraState === 'live' && <><button className="btn success" type="button" onClick={captureFrame}><i className="ti ti-camera-rotate" /> Capture</button>{multiCam && <button className="btn" type="button" onClick={switchCamera}><i className="ti ti-switch-horizontal" /> Flip Camera</button>}<button className="btn danger" type="button" onClick={stopCamera}><i className="ti ti-x" /> Stop</button></>}{cameraState === 'captured' && <button className="btn" type="button" onClick={() => { setPreview(''); setCameraState('off'); setLastResult(null); }}><i className="ti ti-refresh" /> Rescan</button>}</div>
-            </div>
-          )}
-
-          {tabName === 'upload' && (
-            <div>
-              {!uploaded?.ready && <div className="upload-zone" onClick={() => fileInputRef.current.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFile(event.dataTransfer.files[0]); }}><i className="ti ti-file-upload" /><h3>Drop certificate image here</h3><p>or click to browse - JPG, PNG, WebP, PDF supported</p></div>}
-              <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={(event) => handleFile(event.target.files[0])} style={{ display: 'none' }} />
-              {uploaded?.ready && <div className="card" style={{ marginTop: 0, textAlign: 'center' }}><div style={{ marginBottom: 20 }}><span className="status-badge done"><i className="ti ti-check" /> File Ready for Analysis</span></div><div style={{ background: 'var(--bg-color)', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px dashed var(--border-color)' }}><img src={uploaded.data} alt="Uploaded certificate" style={{ maxHeight: 280, maxWidth: '100%', borderRadius: 8, display: 'block', margin: '0 auto' }} /><div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 12 }}><i className="ti ti-file" /> {uploaded.file.name} - {(uploaded.file.size / 1024).toFixed(1)} KB</div></div><div className="controls"><Link href="/" className="btn"><i className="ti ti-arrow-left" /> Back to Home</Link><button className="btn primary" type="button" onClick={analyzeUploaded}><i className="ti ti-scan" /> Analyze Certificate</button><button className="btn danger" type="button" onClick={() => { setUploaded(null); setLastResult(null); setStatus({ state: '', label: 'Idle' }); }}><i className="ti ti-trash" /> Clear</button></div></div>}
-              {processing && <div className="card processing" style={{ position: 'relative', minHeight: 120, borderRadius: 16, display: 'flex', marginTop: 16, background: 'var(--card-bg)' }}><div className="spinner" style={{ borderTopColor: 'var(--primary-color)' }} /><p style={{ color: 'var(--text-primary)', marginTop: 12 }}>Analyzing certificate...</p></div>}
-            </div>
-          )}
-
-          {lastResult && <div className="card fade-in" style={{ marginTop: 24 }}><div className="result-header"><div className="result-title"><i className="ti ti-file-check" style={{ fontSize: 20, color: 'var(--primary-color)' }} /> Scan Result</div><span className={`status-badge ${verified ? 'done' : lastResult.verificationStatus === 'Error' ? 'error' : ''}`}>{verified ? <><i className="ti ti-check" /> Verified</> : <><i className="ti ti-alert-circle" /> {lastResult.verificationStatus || 'Unverified'}</>}</span></div>{rows.map(([key, value]) => <div className="field-row" key={key}><span className="field-label">{key}</span><span className="field-value">{value}</span></div>)}<div className="controls" style={{ marginTop: 20, justifyContent: 'flex-start' }}><button className="btn success" type="button" onClick={secureDatabaseVerify}><i className="ti ti-shield-check" /> Secure Database Verify</button><button className="btn primary" type="button" onClick={downloadResult}><i className="ti ti-download" /> Download Report</button><button className="btn" type="button" onClick={() => navigator.clipboard.writeText(Object.entries(lastResult).map(([key, value]) => `${key}: ${value}`).join('\n'))}><i className="ti ti-copy" /> Copy</button><button className="btn" type="button" onClick={() => { stopCamera(); setUploaded(null); setLastResult(null); setTabName('camera'); }}><i className="ti ti-refresh" /> New Scan</button></div></div>}
+          {lastResult && <div className="card fade-in" style={{ marginTop: 24 }}><div className="result-header"><div className="result-title"><i className="ti ti-file-check" style={{ fontSize: 20, color: 'var(--primary-color)' }} /> Verification Result</div><span className={`status-badge ${verified ? 'done' : 'error'}`}>{verified ? <><i className="ti ti-check" /> Verified</> : <><i className="ti ti-alert-circle" /> {lastResult.verificationStatus || 'Unverified'}</>}</span></div>{rows.map(([key, value]) => <div className="field-row" key={key}><span className="field-label">{key}</span><span className="field-value">{value}</span></div>)}<div className="controls" style={{ marginTop: 20, justifyContent: 'flex-start' }}><button className="btn" type="button" onClick={() => { setUploaded(null); setLastResult(null); }}><i className="ti ti-refresh" /> Scan Another</button></div></div>}
         </div>
       </div>
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
+    </>
+  );
+}
+
+function MyCertificatesPage() {
+  const [loading, setLoading] = useState(true);
+  const [certs, setCerts] = useState([]);
+  
+  useEffect(() => {
+    const unsub = onAuthChange(async (firebaseUser) => {
+      if (!firebaseUser) {
+        navigateTo('/html/login.html');
+        return;
+      }
+      const data = await getUserCertificates(firebaseUser.uid);
+      data.sort((a, b) => (b.issuedAt?.seconds || 0) - (a.issuedAt?.seconds || 0));
+      setCerts(data);
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
+
+  return (
+    <>
+      <Nav />
+      <Page style={{ paddingTop: 36 }}>
+        <button 
+          type="button" 
+          onClick={() => history.back()} 
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary-color)'; e.currentTarget.style.color = 'var(--primary-color)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+          style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', padding: '6px 14px', marginBottom: 20, display: 'inline-flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease' }}>
+          <i className="ti ti-arrow-left" /> Back
+        </button>
+        <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>My Certificates</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>Assessments you have completed</p>
+        
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}><div className="loader" style={{margin: '0 auto'}} /></div>
+        ) : certs.length === 0 ? (
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 12, padding: 40, textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>📜</div>
+            <h3 style={{ fontSize: 18, marginBottom: 8 }}>No certificates yet</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: 20 }}>You haven't completed any assessments.</p>
+            <button onClick={() => navigateTo('/html/type.html')} className="btn-primary">Start Assessment</button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {certs.map(cert => {
+              const d = cert.issuedAt?.toDate ? cert.issuedAt.toDate().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+              return (
+                <div key={cert.certId} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 12, padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{cert.assessmentType === 'it' ? 'IT & Tech' : 'General'} Assessment</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Grade: <b style={{color: 'var(--text-primary)'}}>{cert.grade}</b> ({cert.percentage}%) • {d}</div>
+                  </div>
+                  <button onClick={() => navigateTo(`/html/results.html?id=${cert.certId}`)} className="btn-secondary" style={{ padding: '8px 16px', fontSize: 13 }}>View Details</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Page>
     </>
   );
 }
 
 export default function App() {
   const route = useRoute();
+  if (route.endsWith('/html/login.html')) return <LoginPage />;
   if (route.endsWith('/html/type.html')) return <TypePage />;
   if (route.endsWith('/html/assessment_general.html')) return <AssessmentPage type="general" />;
   if (route.endsWith('/html/assessment_it.html')) return <AssessmentPage type="it" />;
   if (route.endsWith('/html/lead.html')) return <LeadPage />;
   if (route.endsWith('/html/results.html')) return <ResultsPage />;
+  if (route.endsWith('/html/my-certificates.html')) return <MyCertificatesPage />;
   if (route.endsWith('/html/verify_id.html')) return <VerifyIdPage />;
   if (route.endsWith('/html/cert_verify.html')) return <CertDetailsPage />;
   if (route.endsWith('/html/verify.html')) return <SecureVerifyPage />;

@@ -60,6 +60,7 @@ body {
   font-family: 'DM Sans', system-ui, sans-serif;
   line-height: 1.6;
   overflow-x: hidden;
+  padding-top: 56px;
 }
 
 .container {
@@ -152,6 +153,11 @@ nav {
   background: #0C1B2E;
   border-bottom: 1px solid #1E3050;
   padding: 0 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 nav .nav-content {
@@ -182,7 +188,8 @@ nav .nav-content {
 
 .nav-city {
   font-size: 12px;
-  color: #64748B;
+  color: #94A3B8;
+  font-weight: 500;
 }
 
 .theme-toggle-btn {
@@ -298,11 +305,8 @@ nav .nav-content {
   width: 180px;
   height: auto;
   object-fit: contain;
-  mix-blend-mode: multiply;
-  filter: contrast(50) brightness(1.5) grayscale(1);
 }
 
 [data-theme="dark"] .logo-icon {
-  mix-blend-mode: screen;
-  filter: invert(1) contrast(50) brightness(0.7) grayscale(1);
+  filter: invert(1);
 }

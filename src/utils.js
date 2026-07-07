@@ -44,7 +44,35 @@ export function escHtml(value) {
     .replace(/'/g, '&#039;');
 }
 
-export function buildVerifyUrl(certId, name) {
+export function buildVerifyUrl(certId, name, extra = {}) {
   const origin = `${location.origin}${location.pathname.includes('/html/') ? location.pathname.replace(/\/html\/.*$/, '') : ''}`;
-  return `${origin}/html/cert_verify.html?id=${encodeURIComponent(certId)}&name=${encodeURIComponent(name)}`;
+  let url = `${origin}/html/cert_verify.html?id=${encodeURIComponent(certId)}&name=${encodeURIComponent(name)}`;
+  if (extra.grade) url += `&grade=${encodeURIComponent(extra.grade)}`;
+  if (extra.score) url += `&score=${encodeURIComponent(extra.score)}`;
+  if (extra.pct) url += `&pct=${encodeURIComponent(extra.pct)}`;
+  if (extra.date) url += `&date=${encodeURIComponent(extra.date)}`;
+  return url;
+}
+
+export function buildQRPayload({ certId, name, grade, score, pct, date, issuer }) {
+  return JSON.stringify({
+    t: 'hit-cert',
+    v: 1,
+    id: certId,
+    n: name,
+    g: grade,
+    s: score,
+    p: pct,
+    d: date,
+    i: issuer || 'Hackers InfoTech',
+  });
+}
+
+export function parseQRPayload(text) {
+  if (!text) return null;
+  try {
+    const data = JSON.parse(text);
+    if (data.t === 'hit-cert' && data.id) return data;
+  } catch {}
+  return null;
 }
