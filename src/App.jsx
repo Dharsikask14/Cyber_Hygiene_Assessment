@@ -761,11 +761,11 @@ ID: ${certId}`;
     // This allows the certificate layout to spread perfectly over the 1123px landscape space
     return `<div style="width:100%; height:100%; background:#0C1B2E; border:8px solid ${grade.color}; border-radius:30px; padding:30px 50px; text-align:center; color:#fff; font-family:Arial,sans-serif; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
       <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
-        <div style="font-size:16px; letter-spacing:.12em; color:${grade.color}; text-transform:uppercase; margin-bottom:10px;">Hackers InfoTech - Official Certificate</div>
+        <div style="font-size:16px; letter-spacing:.12em; color:#38BDF8; text-transform:uppercase; margin-bottom:10px;">Hackers InfoTech - Official Certificate</div>
         <div style="font-size:42px; font-weight:700; color:#F0F9FF; margin-bottom:10px;">Cyber Hygiene Assessment</div>
         <div style="color:#64748B; margin-bottom:20px; font-size:16px;">Certificate of Completion</div>
         <div style="font-size:18px; color:#94A3B8; margin-bottom:6px;">This certifies that</div>
-        <div style="font-size:38px; font-weight:700; color:${grade.color}; margin-bottom:4px;">${escHtml(lead.name)}</div>
+        <div style="font-size:38px; font-weight:700; color:#38BDF8; margin-bottom:4px;">${escHtml(lead.name)}</div>
         ${lead.company ? `<div style="font-size:16px; color:#64748B; margin-bottom:12px;">${escHtml(lead.company)}</div>` : ''}
         <div style="font-size:16px; color:#94A3B8; margin-bottom:14px;">has completed the Cyber Hygiene Assessment and achieved the grade</div>
         <div style="font-size:90px; font-weight:700; color:${grade.color}; line-height:1; font-family:monospace;">${grade.grade}</div>
@@ -778,7 +778,7 @@ ID: ${certId}`;
           <div style="color:${grade.color}; font-family:monospace; font-size:12px; font-weight:700;">${escHtml(certId)}</div>
         </div>` : `<div style="color:#EF4444; font-size:16px;">QR code unavailable</div>`}
       </div>
-      <div style="border-top:2px solid #1E3050; padding-top:16px; display:flex; justify-content:center; gap:32px; font-size:14px; color:#475569; font-family:Arial,sans-serif;">
+      <div style="border-top:2px solid #1E3050; padding-top:16px; display:flex; justify-content:center; gap:32px; font-size:14px; color:#CBD5E1; font-family:Arial,sans-serif;">
         <span>${BRAND.url}</span><span>${BRAND.email}</span><span>${BRAND.city}</span>
       </div>
     </div>`;
@@ -1012,7 +1012,12 @@ ID: ${certId}`;
         to_email: lead.email,
         to_name: lead.name,
         subject: `Your Cyber Hygiene Report - Grade ${grade.grade} (${pct}%) | Hackers InfoTech`,
-        html_body: `<div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:30px;"><h2>Hackers InfoTech</h2><p>Dear <b>${escHtml(lead.name)}</b>,</p><p>Your grade is <b>${grade.grade}</b> (${pct}%).</p>${failed.length > 0 ? failed.map((q, index) => `<p><b>${index + 1}. ${escHtml(q.text)}</b><br/>Fix: ${escHtml(q.tip)}</p>`).join('') : '<p>Excellent! No action items needed.</p>'}</div>`,
+        html_body: `<div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:30px;"><h2>Hackers InfoTech</h2><p>Dear <b>${escHtml(lead.name)}</b>,</p><p>Your grade is <b>${grade.grade}</b> (${pct}%).</p>${failed.length > 0 ? failed.map((q, index) => `<p><b>${index + 1}. ${escHtml(q.text)}</b><br/>Fix: ${escHtml(q.tip)}</p>`).join('') : '<p>Excellent! No action items needed.</p>'}
+        <div style="margin-top: 35px; text-align: center; border-top: 1px solid #E2E8F0; padding-top: 25px;">
+          <a href="${verifyUrl}" style="display:inline-block; padding:12px 24px; background:#0C1B2E; color:#fff; text-decoration:none; border-radius:8px; font-weight:bold; margin: 0 10px 10px 0;">📄 Download Official Certificate</a>
+          <a href="${verifyUrl}" style="display:inline-block; padding:12px 24px; background:#F1F5F9; color:#0F172A; text-decoration:none; border-radius:8px; font-weight:bold; border: 1px solid #CBD5E1; margin: 0 0 10px 0;">📊 View Full Report</a>
+        </div>
+        </div>`,
       });
       setEmailState('sent');
     } catch (error) {
@@ -1040,11 +1045,11 @@ ID: ${certId}`;
           {/* Inline Certificate Preview */}
           {certQrDataUrl ? (
             <div style={{ background: '#0C1B2E', border: `2px solid ${grade.color}`, borderRadius: 20, padding: '30px 20px', textAlign: 'center', color: '#fff', marginBottom: 20, fontFamily: 'Arial, sans-serif' }}>
-              <div style={{ fontSize: 10, letterSpacing: '.12em', color: grade.color, textTransform: 'uppercase', marginBottom: 10 }}>Hackers InfoTech - Official Certificate</div>
+              <div style={{ fontSize: 10, letterSpacing: '.12em', color: '#38BDF8', textTransform: 'uppercase', marginBottom: 10 }}>Hackers InfoTech - Official Certificate</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: '#F0F9FF', marginBottom: 4 }}>Cyber Hygiene Assessment</div>
               <div style={{ color: '#64748B', marginBottom: 24, fontSize: 11 }}>Certificate of Completion</div>
               <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 4 }}>This certifies that</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: grade.color, marginBottom: 2 }}>{lead.name}</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#38BDF8', marginBottom: 2 }}>{lead.name}</div>
               {lead.company && <div style={{ fontSize: 11, color: '#64748B', marginBottom: 16 }}>{lead.company}</div>}
               <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 12, marginTop: lead.company ? 0 : 12 }}>has completed the Cyber Hygiene Assessment and achieved the grade</div>
               <div style={{ fontSize: 72, fontWeight: 700, color: grade.color, lineHeight: 1, fontFamily: 'monospace' }}>{grade.grade}</div>
@@ -1057,7 +1062,7 @@ ID: ${certId}`;
                 <div style={{ color: grade.color, fontFamily: 'monospace', fontSize: 11, fontWeight: 700 }}>{certId}</div>
               </div>
               
-              <div style={{ borderTop: '1px solid #1E3050', paddingTop: 14, display: 'flex', justifyContent: 'center', gap: 16, fontSize: 10, color: '#475569', flexWrap: 'wrap' }}>
+              <div style={{ borderTop: '1px solid #1E3050', paddingTop: 14, display: 'flex', justifyContent: 'center', gap: 16, fontSize: 10, color: '#CBD5E1', flexWrap: 'wrap' }}>
                 <span>{BRAND.url}</span>
                 <span>{BRAND.email}</span>
               </div>
