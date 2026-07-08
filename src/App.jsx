@@ -759,26 +759,26 @@ ID: ${certId}`;
     
     // --- BUG 2 FIX: REMOVE max-width:760px AND EXTEND TO 100% ---
     // This allows the certificate layout to spread perfectly over the 1123px landscape space
-    return `<div style="width:100%; height:100%; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
-      <div style="border:4px double #0EA5E9; border-radius:20px; padding:30px 40px; text-align:center; color:#fff; width:100%; flex:1; font-family:Arial,sans-serif; box-sizing:border-box; background:#0C1B2E; display:flex; flex-direction:column; justify-content:center; margin-bottom: 20px;">
-      <div style="font-size:14px; letter-spacing:.12em; color:#38BDF8; text-transform:uppercase; margin-bottom:8px;">Hackers InfoTech - Official Certificate</div>
-      <div style="font-size:36px; font-weight:700; color:#F0F9FF; margin-bottom:8px;">Cyber Hygiene Assessment</div>
-      <div style="color:#64748B; margin-bottom:16px; font-size:14px;">Certificate of Completion</div>
-      <div style="font-size:16px; color:#94A3B8; margin-bottom:6px;">This certifies that</div>
-      <div style="font-size:32px; font-weight:700; color:#38BDF8; margin-bottom:4px;">${escHtml(lead.name)}</div>
-      ${lead.company ? `<div style="font-size:14px; color:#64748B; margin-bottom:12px;">${escHtml(lead.company)}</div>` : ''}
-      <div style="font-size:14px; color:#94A3B8; margin-bottom:12px;">has completed the Cyber Hygiene Assessment and achieved the grade</div>
-      <div style="font-size:80px; font-weight:700; color:${grade.color}; line-height:1; font-family:monospace;">${grade.grade}</div>
-      <div style="font-size:20px; font-weight:600; color:#F0F9FF; margin:6px 0 4px;">${grade.label}</div>
-      <div style="font-size:22px; color:${grade.color}; font-weight:700; margin-bottom:4px;">${pct}% (${score}/${mx} pts)</div>
-      <div style="color:#475569; font-size:14px; margin-bottom:16px;">Assessed on ${date}</div>
-      
-      ${qrDataUrl ? `<div style="background:#FFFFFF; border:2px solid #E2E8F0; border-radius:12px; padding:8px 12px; display:inline-flex; flex-direction:column; align-items:center; gap:6px; margin: 0 auto;">
-        <img src="${qrDataUrl}" width="100" height="100" style="display:block;" />
-        <div style="color:#0EA5E9; font-family:monospace; font-size:11px; font-weight:700;">${escHtml(certId)}</div>
-      </div>` : `<div style="color:#EF4444; font-size:12px;">QR code unavailable</div>`}
+    return `<div style="width:100%; height:100%; background:#0C1B2E; border:8px solid ${grade.color}; border-radius:30px; padding:30px 50px; text-align:center; color:#fff; font-family:Arial,sans-serif; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+        <div style="font-size:16px; letter-spacing:.12em; color:${grade.color}; text-transform:uppercase; margin-bottom:10px;">Hackers InfoTech - Official Certificate</div>
+        <div style="font-size:42px; font-weight:700; color:#F0F9FF; margin-bottom:10px;">Cyber Hygiene Assessment</div>
+        <div style="color:#64748B; margin-bottom:20px; font-size:16px;">Certificate of Completion</div>
+        <div style="font-size:18px; color:#94A3B8; margin-bottom:6px;">This certifies that</div>
+        <div style="font-size:38px; font-weight:700; color:${grade.color}; margin-bottom:4px;">${escHtml(lead.name)}</div>
+        ${lead.company ? `<div style="font-size:16px; color:#64748B; margin-bottom:12px;">${escHtml(lead.company)}</div>` : ''}
+        <div style="font-size:16px; color:#94A3B8; margin-bottom:14px;">has completed the Cyber Hygiene Assessment and achieved the grade</div>
+        <div style="font-size:90px; font-weight:700; color:${grade.color}; line-height:1; font-family:monospace;">${grade.grade}</div>
+        <div style="font-size:24px; font-weight:600; color:#F0F9FF; margin:8px 0 6px;">${grade.label}</div>
+        <div style="font-size:26px; color:${grade.color}; font-weight:700; margin-bottom:6px;">${pct}% (${score}/${mx} pts)</div>
+        <div style="color:#475569; font-size:16px; margin-bottom:18px;">Assessed on ${date}</div>
+        
+        ${qrDataUrl ? `<div style="background:#FFFFFF; border:3px solid #E2E8F0; border-radius:16px; padding:10px 14px; display:inline-flex; flex-direction:column; align-items:center; gap:6px; margin: 0 auto;">
+          <img src="${qrDataUrl}" width="100" height="100" style="display:block;" />
+          <div style="color:${grade.color}; font-family:monospace; font-size:12px; font-weight:700;">${escHtml(certId)}</div>
+        </div>` : `<div style="color:#EF4444; font-size:16px;">QR code unavailable</div>`}
       </div>
-      <div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; font-family:Arial,sans-serif; box-sizing:border-box;">
+      <div style="border-top:2px solid #1E3050; padding-top:16px; display:flex; justify-content:center; gap:32px; font-size:14px; color:#475569; font-family:Arial,sans-serif;">
         <span>${BRAND.url}</span><span>${BRAND.email}</span><span>${BRAND.city}</span>
       </div>
     </div>`;
@@ -811,7 +811,7 @@ ID: ${certId}`;
       box-sizing: border-box;
       overflow: hidden;
       background: ${isCert ? '#0C1B2E' : '#ffffff'};
-      padding: ${isCert ? '40px 40px' : '40px 30px'};
+      padding: ${isCert ? '0px' : '40px 30px'};
       color: ${isCert ? '#fff' : '#000'};
     `;
     document.body.appendChild(el);
@@ -889,13 +889,13 @@ ID: ${certId}`;
     }
   }
 
-  async function shareCertificateImage() {
+  async function downloadCertificateImage() {
     const html2canvas = window.html2canvas;
     if (!html2canvas) {
       alert('Image library is still loading. Please try again.');
       return;
     }
-    setBusy('share');
+    setBusy('image');
     
     const el = document.createElement('div');
     el.style.cssText = `
@@ -907,7 +907,7 @@ ID: ${certId}`;
       box-sizing: border-box;
       overflow: hidden;
       background: #0C1B2E;
-      padding: 40px 40px;
+      padding: 0px;
       color: #fff;
     `;
     document.body.appendChild(el);
@@ -947,27 +947,11 @@ ID: ${certId}`;
           return;
         }
         
-        const file = new File([blob], 'Cyber_Hygiene_Certificate.png', { type: 'image/png' });
-        const shareData = {
-          title: 'Cyber Hygiene Assessment Certificate',
-          text: `I scored ${grade.grade} (${pct}%) on the Cyber Hygiene Assessment by Hackers InfoTech! Verify here: ${verifyUrl}`,
-          files: [file]
-        };
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share(shareData);
-          } catch (err) {
-            console.error('Share failed or was cancelled by user', err);
-          }
-        } else {
-          // Fallback to image download
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'Cyber_Hygiene_Certificate.png';
-          a.click();
-          alert('Your browser does not support direct image sharing. We downloaded the certificate as an image so you can attach it directly to your LinkedIn post!');
-        }
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'Cyber_Hygiene_Certificate.png';
+        a.click();
+        
         setBusy('');
       }, 'image/png');
 
@@ -1054,12 +1038,12 @@ ID: ${certId}`;
           
           {/* Inline Certificate Preview */}
           {certQrDataUrl ? (
-            <div style={{ background: '#0C1B2E', border: '2px solid #0EA5E9', borderRadius: 20, padding: '30px 20px', textAlign: 'center', color: '#fff', marginBottom: 20, fontFamily: 'Arial, sans-serif' }}>
-              <div style={{ fontSize: 10, letterSpacing: '.12em', color: '#38BDF8', textTransform: 'uppercase', marginBottom: 10 }}>Hackers InfoTech - Official Certificate</div>
+            <div style={{ background: '#0C1B2E', border: `2px solid ${grade.color}`, borderRadius: 20, padding: '30px 20px', textAlign: 'center', color: '#fff', marginBottom: 20, fontFamily: 'Arial, sans-serif' }}>
+              <div style={{ fontSize: 10, letterSpacing: '.12em', color: grade.color, textTransform: 'uppercase', marginBottom: 10 }}>Hackers InfoTech - Official Certificate</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: '#F0F9FF', marginBottom: 4 }}>Cyber Hygiene Assessment</div>
               <div style={{ color: '#64748B', marginBottom: 24, fontSize: 11 }}>Certificate of Completion</div>
               <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 4 }}>This certifies that</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#38BDF8', marginBottom: 2 }}>{lead.name}</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: grade.color, marginBottom: 2 }}>{lead.name}</div>
               {lead.company && <div style={{ fontSize: 11, color: '#64748B', marginBottom: 16 }}>{lead.company}</div>}
               <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 12, marginTop: lead.company ? 0 : 12 }}>has completed the Cyber Hygiene Assessment and achieved the grade</div>
               <div style={{ fontSize: 72, fontWeight: 700, color: grade.color, lineHeight: 1, fontFamily: 'monospace' }}>{grade.grade}</div>
@@ -1069,7 +1053,7 @@ ID: ${certId}`;
               
               <div style={{ background: '#FFFFFF', border: '2px solid #E2E8F0', borderRadius: 12, padding: 12, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginBottom: 20 }}>
                 <img src={certQrDataUrl} width="100" height="100" style={{ display: 'block' }} alt="Verify QR" />
-                <div style={{ color: '#0EA5E9', fontFamily: 'monospace', fontSize: 11, fontWeight: 700 }}>{certId}</div>
+                <div style={{ color: grade.color, fontFamily: 'monospace', fontSize: 11, fontWeight: 700 }}>{certId}</div>
               </div>
               
               <div style={{ borderTop: '1px solid #1E3050', paddingTop: 14, display: 'flex', justifyContent: 'center', gap: 16, fontSize: 10, color: '#475569', flexWrap: 'wrap' }}>
@@ -1083,10 +1067,12 @@ ID: ${certId}`;
               <div style={{ color: '#94A3B8', fontSize: 12 }}>Generating certificate and QR code...</div>
             </div>
           )}
-          <div className="grid-2" style={{ marginBottom: 14 }}>
-            <button type="button" onClick={() => downloadPdf('cert')} disabled={busy === 'cert'} style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#7C3AED', cursor: 'pointer' }}>{busy === 'cert' ? '⏳ Generating...' : '🏅 Download Certificate'}</button>
-            <button type="button" onClick={() => downloadPdf('report')} disabled={busy === 'report'} style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer' }}>{busy === 'report' ? '⏳ Generating...' : '📋 Download Full Report'}</button>
+          <div className="grid-2" style={{ marginBottom: 10 }}>
+            <button type="button" onClick={() => downloadPdf('cert')} disabled={busy === 'cert'} style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#7C3AED', cursor: 'pointer' }}>{busy === 'cert' ? '⏳ Generating...' : '🏅 Download PDF Certificate'}</button>
+            <button type="button" onClick={downloadCertificateImage} disabled={busy === 'image'} style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#059669', cursor: 'pointer' }}>{busy === 'image' ? '⏳ Generating...' : '🖼️ Download Image to Share'}</button>
           </div>
+          <button type="button" onClick={() => downloadPdf('report')} disabled={busy === 'report'} style={{ width: '100%', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer', marginBottom: 14 }}>{busy === 'report' ? '⏳ Generating...' : '📋 Download Full Report'}</button>
+
           <button type="button" onClick={sendEmail} style={{ width: '100%', background: emailState === 'sent' ? '#ECFDF5' : 'var(--primary-color)', border: emailState === 'sent' ? '1px solid #A7F3D0' : 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, color: emailState === 'sent' ? '#059669' : '#fff', cursor: 'pointer', marginBottom: 14 }}>
             {emailState === 'sending' ? '⏳ Sending...' : emailState === 'sent' ? `✅ Report sent to ${lead.email}` : emailState === 'failed' ? '❌ Send failed. Check config.' : `📧 Email Report to ${lead.email}`}
           </button>
@@ -1095,22 +1081,18 @@ ID: ${certId}`;
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>🌐 Share Your Achievement</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {/* Native Image Share */}
-              <button
-                type="button"
-                onClick={shareCertificateImage}
-                disabled={busy === 'share'}
-                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0A66C2', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, border: 'none', cursor: busy === 'share' ? 'not-allowed' : 'pointer', transition: 'opacity 0.2s', opacity: busy === 'share' ? 0.7 : 1 }}
-                onMouseEnter={e => busy !== 'share' && (e.currentTarget.style.opacity = '0.85')}
-                onMouseLeave={e => busy !== 'share' && (e.currentTarget.style.opacity = '1')}
+              {/* LinkedIn Post */}
+              <a
+                href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(verifyUrl)}&title=${encodeURIComponent(`I scored ${grade.grade} (${pct}%) on the Cyber Hygiene Assessment!`)}&summary=${encodeURIComponent(`I just completed the Cyber Hygiene Assessment by Hackers InfoTech and achieved the grade ${grade.grade} (${pct}%). Verify my certificate: ${verifyUrl}`)}&source=${encodeURIComponent('Hackers InfoTech')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0A66C2', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
               >
-                {busy === 'share' ? '⏳ Preparing...' : (
-                  <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                    LinkedIn
-                  </>
-                )}
-              </button>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                LinkedIn
+              </a>
               {/* Facebook */}
               <a
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(verifyUrl)}`}
