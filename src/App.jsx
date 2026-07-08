@@ -1019,12 +1019,22 @@ ID: ${certId}`;
       await window.emailjs.send(BRAND.emailjs.serviceId, BRAND.emailjs.templateId, {
         to_email: targetEmail,
         to_name: lead.name,
-        subject: `Your Cyber Hygiene Report - Grade ${grade.grade} (${pct}%) | Hackers InfoTech`,
-        html_body: `<div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:30px;"><h2>Hackers InfoTech</h2><p>Dear <b>${escHtml(lead.name)}</b>,</p><p>Your grade is <b>${grade.grade}</b> (${pct}%).</p>${failed.length > 0 ? failed.map((q, index) => `<p><b>${index + 1}. ${escHtml(q.text)}</b><br/>Fix: ${escHtml(q.tip)}</p>`).join('') : '<p>Excellent! No action items needed.</p>'}
-        <div style="margin-top: 35px; text-align: center; border-top: 1px solid #E2E8F0; padding-top: 25px;">
-          <a href="${verifyUrl}" style="display:inline-block; padding:12px 24px; background:#0C1B2E; color:#fff; text-decoration:none; border-radius:8px; font-weight:bold; margin: 0 10px 10px 0;">📄 Download Official Certificate</a>
-          <a href="${verifyUrl}" style="display:inline-block; padding:12px 24px; background:#F1F5F9; color:#0F172A; text-decoration:none; border-radius:8px; font-weight:bold; border: 1px solid #CBD5E1; margin: 0 0 10px 0;">📊 View Full Report</a>
-        </div>
+        subject: `Cyber Hygiene Report`,
+        html_body: `<div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:40px;background:#ffffff;border:1px solid #E2E8F0;border-radius:12px;">
+          <h2 style="color:#0C1B2E;margin-bottom:20px;font-size:24px;">Cyber Hygiene Report</h2>
+          <p style="color:#475569;font-size:16px;line-height:1.6;margin-bottom:20px;">Dear <b>${escHtml(lead.name)}</b>,</p>
+          <p style="color:#475569;font-size:16px;line-height:1.6;margin-bottom:20px;">Thank you for taking the time to complete the Cyber Hygiene Assessment. We have successfully processed your responses and calculated your cyber safety score.</p>
+          <p style="color:#475569;font-size:16px;line-height:1.6;margin-bottom:30px;">Your overall grade is <b>${grade.grade}</b> (${pct}%). This score reflects your current cybersecurity posture and readiness against common digital threats.</p>
+          
+          <div style="margin-top:40px;margin-bottom:40px;text-align:center;">
+            <a href="${verifyUrl}" style="display:inline-block;padding:14px 28px;background:#0C1B2E;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:bold;margin:10px;font-size:15px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">📄 Download Certificate</a>
+            <a href="${verifyUrl}" style="display:inline-block;padding:14px 28px;background:#F1F5F9;color:#0F172A;text-decoration:none;border-radius:8px;font-weight:bold;border:1px solid #CBD5E1;margin:10px;font-size:15px;">📊 View Full Report</a>
+          </div>
+          
+          <p style="color:#475569;font-size:15px;line-height:1.6;border-top:1px solid #E2E8F0;padding-top:20px;margin-top:30px;">
+            Best regards,<br/>
+            <strong>Hackers InfoTech</strong>
+          </p>
         </div>`,
       });
       setEmailState('sent');
