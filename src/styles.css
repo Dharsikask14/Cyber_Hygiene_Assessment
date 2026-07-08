@@ -1254,3 +1254,23 @@ button {
 
 
 input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active { -webkit-box-shadow: 0 0 0 30px var(--bg-color) inset !important; -webkit-text-fill-color: var(--text-primary) !important; transition: background-color 5000s ease-in-out 0s; }
+
+/* Mobile Navbar Overlap Fix */
+@media (max-width: 600px) {
+  .nav-city {
+    display: none !important;
+  }
+  .nav-brand span {
+    display: none !important;
+  }
+  .nav-right {
+    gap: 8px !important;
+  }
+  .theme-toggle-btn {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+  }
+  nav {
+    padding: 0 12px !important;
+  }
+}
