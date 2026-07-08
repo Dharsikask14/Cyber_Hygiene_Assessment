@@ -111,7 +111,7 @@ function HomePage() {
   }
 
   return (
-    <Page style={{ position: 'relative', zIndex: 1, height: 'calc(100vh - 56px)', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 40px' }}>
+    <Page style={{ position: 'relative', zIndex: 1, minHeight: 'calc(100vh - 56px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 40px 40px', marginTop: 56 }}>
       <div style={{ position: 'absolute', top: -100, left: -150, width: 450, height: 450, background: 'var(--primary-color)', filter: 'blur(140px)', opacity: 0.12, borderRadius: '50%', zIndex: -1, pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', top: 250, right: -200, width: 400, height: 400, background: '#8B5CF6', filter: 'blur(140px)', opacity: 0.1, borderRadius: '50%', zIndex: -1, pointerEvents: 'none' }} />
 

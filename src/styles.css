@@ -1251,3 +1251,6 @@ button {
     aspect-ratio: 3 / 4;
   }
 }
+
+.container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 40px; }
+
