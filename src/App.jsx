@@ -578,7 +578,7 @@ function LeadPage() {
           </div>
         ))}
         <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5 }}>
-          Profile details are pulled from your account. To update them, edit your profile.
+          Updates made here will be automatically saved to your profile.
         </p>
       </div>
 
@@ -1044,8 +1044,8 @@ ID: ${certId}`;
       });
       setEmailState('sent');
     } catch (error) {
-      console.error(error);
-      setEmailState('failed');
+      console.error('EmailJS Error:', error);
+      setEmailState(error?.text || error?.message || 'Check config or quota');
     }
   }
 
@@ -1101,9 +1101,9 @@ ID: ${certId}`;
             <button type="button" onClick={downloadCertificateImage} disabled={busy === 'image'} style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#059669', cursor: 'pointer' }}>{busy === 'image' ? '⏳ Generating...' : '🖼️ Download Image to Share'}</button>
           </div>
           <button type="button" onClick={() => downloadPdf('report')} disabled={busy === 'report'} style={{ width: '100%', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer', marginBottom: 14 }}>{busy === 'report' ? '⏳ Generating...' : '📋 Download Full Report'}</button>
-
-          <button type="button" onClick={sendEmail} style={{ width: '100%', background: emailState === 'sent' ? '#ECFDF5' : 'var(--primary-color)', border: emailState === 'sent' ? '1px solid #A7F3D0' : 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, color: emailState === 'sent' ? '#059669' : '#fff', cursor: 'pointer', marginBottom: 14 }}>
-            {emailState === 'sending' ? '⏳ Sending...' : emailState === 'sent' ? `✅ Report sent to ${lead.email}` : emailState === 'failed' ? '❌ Send failed. Check config.' : `📧 Email Report to ${lead.email}`}
+          
+          <button type="button" onClick={sendEmail} disabled={emailState !== ''} style={{ width: '100%', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: (emailState !== '' && emailState !== 'sending' && emailState !== 'sent') ? '#EF4444' : '#64748B', cursor: emailState === '' ? 'pointer' : 'default' }}>
+            {emailState === '' ? `📧 Email Report to ${lead.email}` : emailState === 'sending' ? '⏳ Sending...' : emailState === 'sent' ? `✅ Report sent to ${lead.email}` : `❌ Failed: ${emailState}`}
           </button>
 
           {/* Social Share */}
