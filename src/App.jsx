@@ -4,7 +4,7 @@ import jsQR from 'jsqr';
 import { ALL, BRAND, GENERAL_SECTIONS, IT_SECTIONS, getGrade, maxScore } from './data.js';
 import { CERT_STORE_KEY, buildQRPayload, buildVerifyUrl, parseQRPayload, escHtml, genCertId, linkTo, navigateTo, readJson, sha256 } from './utils.js';
 import { Nav, Page, ShieldLogo } from './components.jsx';
-import { onAuthChange, signUpWithEmail, signInWithEmail } from './auth.js';
+import { onAuthChange, signUpWithEmail, signInWithEmail, saveUserProfile } from './auth.js';
 import { saveCertificate, getCertificate, getUserCertificates, getUserProfile, deleteCertificate } from './db.js';
 import { auth } from './firebase.js';
 import logoUrl from '../images/logo.png';
@@ -555,7 +555,12 @@ function LeadPage() {
       </div>
 
       <div className="card" style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 }}>Your Certificate Details</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Your Certificate Details</span>
+          <button type="button" onClick={() => navigateTo('/html/profile.html')} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <i className="ti ti-pencil" /> Edit
+          </button>
+        </div>
         {[
           { icon: 'ti-user', label: 'Name', value: profile?.name || '—' },
           { icon: 'ti-mail', label: 'Email', value: profile?.email || '—' },
@@ -1907,10 +1912,84 @@ function MyCertificatesPage() {
     </>
   );
 }
+}
 
+
+function ProfilePage() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState({ name: '', phone: '', company: '' });
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const p = await getUserProfile(user.uid);
+        if (p) setProfile({ name: p.name || '', phone: p.phone || '', company: p.company || '' });
+      } else {
+        navigateTo('/html/login.html');
+      }
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
+
+  async function save() {
+    if (!profile.name.trim()) return alert('Name is required');
+    setSaving(true);
+    try {
+      await saveUserProfile(auth.currentUser.uid, {
+        name: profile.name.trim(),
+        phone: profile.phone.trim(),
+        company: profile.company.trim()
+      });
+      // Update fallback store if it exists
+      const lead = readJson('lead', {});
+      lead.name = profile.name.trim();
+      lead.phone = profile.phone.trim();
+      lead.company = profile.company.trim();
+      localStorage.setItem('lead', JSON.stringify(lead));
+      
+      alert('Profile updated successfully!');
+      window.history.back();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save profile.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return <Page><div style={{textAlign:'center', marginTop:100}}>Loading...</div></Page>;
+
+  return (
+    <Page style={{ padding: '40px 20px', maxWidth: 450, margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: 30 }}>
+        <div style={{ width: 64, height: 64, borderRadius: 16, background: 'var(--grade-a-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+          <i className="ti ti-user-edit" style={{ fontSize: 28, color: 'var(--primary-color)' }} />
+        </div>
+        <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Edit Profile</h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Update your certificate details below.</p>
+      </div>
+      
+      <div className="card" style={{ padding: 24 }}>
+        <LeadInput label="Full Name (For Certificate)" value={profile.name} onChange={(v) => setProfile({ ...profile, name: v })} placeholder="e.g. DHARSIKA SK" />
+        <LeadInput label="Phone Number (Optional)" value={profile.phone} onChange={(v) => setProfile({ ...profile, phone: v })} placeholder="e.g. +91 98765 43210" />
+        <LeadInput label="Company / Institution (Optional)" value={profile.company} onChange={(v) => setProfile({ ...profile, company: v })} placeholder="e.g. KEC" />
+        
+        <button onClick={save} className="btn-primary" style={{ width: '100%', marginTop: 24, padding: 12, fontSize: 15 }} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+        <button onClick={() => window.history.back()} type="button" className="btn-secondary" style={{ width: '100%', marginTop: 12, padding: 12, fontSize: 15 }}>
+          Cancel
+        </button>
+      </div>
+    </Page>
+  );
+}
 
 export default function App() {
   const route = useRoute();
+  if (route.endsWith('/html/profile.html')) return <ProfilePage />;
   if (route.endsWith('/html/login.html')) return <LoginPage />;
   if (route.endsWith('/html/type.html')) return <TypePage />;
   if (route.endsWith('/html/assessment_general.html')) return <AssessmentPage type="general" />;

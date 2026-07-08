@@ -104,7 +104,12 @@ export function Nav() {
               {dropdownOpen && (
                 <div className="user-dropdown">
                   <div className="dropdown-header">
-                    <div className="dropdown-name">{profile?.name || user.displayName || 'User'}</div>
+                    <div className="dropdown-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {profile?.name || user.displayName || 'User'}
+                      <button type="button" onClick={() => { setDropdownOpen(false); navigateTo('/html/profile.html'); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--primary-color)' }}>
+                        <i className="ti ti-pencil" style={{ fontSize: 14 }} />
+                      </button>
+                    </div>
                     <div className="dropdown-email">{user.email}</div>
                     {user?.metadata?.lastSignInTime && (
                       <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>
