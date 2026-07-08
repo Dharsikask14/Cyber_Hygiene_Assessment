@@ -107,7 +107,7 @@ export function Nav() {
                     <div className="dropdown-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       {profile?.name || user.displayName || 'User'}
                       <button type="button" onClick={() => { setDropdownOpen(false); navigateTo('/html/profile.html'); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--primary-color)' }}>
-                        <i className="ti ti-pencil" style={{ fontSize: 14 }} />
+                        <i className="ti ti-edit" style={{ fontSize: 16 }} />
                       </button>
                     </div>
                     <div className="dropdown-email">{user.email}</div>

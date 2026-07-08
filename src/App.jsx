@@ -558,7 +558,7 @@ function LeadPage() {
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Your Certificate Details</span>
           <button type="button" onClick={() => navigateTo('/html/profile.html')} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <i className="ti ti-pencil" /> Edit
+            <i className="ti ti-edit" style={{ fontSize: 16 }} /> Edit
           </button>
         </div>
         {[
