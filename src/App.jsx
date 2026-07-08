@@ -117,11 +117,6 @@ function HomePage() {
 
       <div className="hero-grid" style={{ padding: '0' }}>
         <div style={{ textAlign: 'left' }}>
-          <div className="floating" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '6px 16px', fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary-color)', display: 'inline-block', boxShadow: '0 0 8px var(--primary-color)' }} />
-            Free Cyber Hygiene Assessment
-          </div>
-
           <h1 style={{ fontSize: 54, fontWeight: 700, lineHeight: 1.1, margin: '0 0 16px', letterSpacing: -1 }}>
             How safe are you<br /><span className="text-gradient">online?</span>
           </h1>
@@ -129,10 +124,14 @@ function HomePage() {
             Our assessment works on all devices, so you only have to set it up once, and get beautiful results forever.
           </p>
 
-          <div className="hero-buttons">
+          <div className="hero-buttons" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <button type="button" className="btn-primary floating" onClick={handleStartAssessment}>
               {authUser === undefined ? 'Loading...' : 'Start Assessment →'}
             </button>
+            <div className="floating" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '6px 16px', fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary-color)', display: 'inline-block', boxShadow: '0 0 8px var(--primary-color)' }} />
+              Free Cyber Hygiene Assessment
+            </div>
           </div>
           <div style={{ marginTop: 16, fontSize: 13, color: 'var(--text-secondary)', marginBottom: 32, fontWeight: 500 }}>
             5 minutes · 100% free · Certificate + PDF report included
@@ -180,6 +179,7 @@ function HomePage() {
           <div style={{ fontSize: 15, color: 'var(--text-secondary)', fontWeight: 500, opacity: 0.8 }}>An ISO 9001:2015 Certified Company</div>
         </div>
       </div>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 5, background: 'linear-gradient(90deg, var(--primary-color) 0%, #8B5CF6 100%)', zIndex: 10 }} />
     </Page>
   );
 }
