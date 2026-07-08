@@ -759,7 +759,7 @@ ID: ${certId}`;
     
     // --- BUG 2 FIX: REMOVE max-width:760px AND EXTEND TO 100% ---
     // This allows the certificate layout to spread perfectly over the 1123px landscape space
-    return `<div style="width:100%; height:100%; background:#0C1B2E; border:8px solid ${grade.color}; border-radius:30px; padding:30px 50px; text-align:center; color:#fff; font-family:Arial,sans-serif; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
+    return `<div style="width:100%; height:100%; background:#0C1B2E; border:10px solid #38BDF8; border-radius:30px; padding:40px 50px; text-align:center; color:#fff; font-family:Arial,sans-serif; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
       <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
         <div style="font-size:16px; letter-spacing:.12em; color:#38BDF8; text-transform:uppercase; margin-bottom:10px;">Hackers InfoTech - Official Certificate</div>
         <div style="font-size:42px; font-weight:700; color:#F0F9FF; margin-bottom:10px;">Cyber Hygiene Assessment</div>
@@ -778,7 +778,7 @@ ID: ${certId}`;
           <div style="color:${grade.color}; font-family:monospace; font-size:12px; font-weight:700;">${escHtml(certId)}</div>
         </div>` : `<div style="color:#EF4444; font-size:16px;">QR code unavailable</div>`}
       </div>
-      <div style="border-top:2px solid #1E3050; padding-top:16px; display:flex; justify-content:center; gap:32px; font-size:14px; color:#CBD5E1; font-family:Arial,sans-serif;">
+      <div style="border-top:1px solid #1E3050; padding-top:20px; display:flex; justify-content:center; gap:40px; font-size:14px; color:#94A3B8; font-family:Arial,sans-serif; font-weight: 500; letter-spacing: 0.5px;">
         <span>${BRAND.url}</span><span>${BRAND.email}</span><span>${BRAND.city}</span>
       </div>
     </div>`;
@@ -1062,7 +1062,7 @@ ID: ${certId}`;
           
           {/* Inline Certificate Preview */}
           {certQrDataUrl ? (
-            <div style={{ background: '#0C1B2E', border: `2px solid ${grade.color}`, borderRadius: 20, padding: '30px 20px', textAlign: 'center', color: '#fff', marginBottom: 20, fontFamily: 'Arial, sans-serif' }}>
+            <div style={{ background: '#0C1B2E', border: `3px solid #38BDF8`, borderRadius: 20, padding: '30px 20px', textAlign: 'center', color: '#fff', marginBottom: 20, fontFamily: 'Arial, sans-serif' }}>
               <div style={{ fontSize: 10, letterSpacing: '.12em', color: '#38BDF8', textTransform: 'uppercase', marginBottom: 10 }}>Hackers InfoTech - Official Certificate</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: '#F0F9FF', marginBottom: 4 }}>Cyber Hygiene Assessment</div>
               <div style={{ color: '#64748B', marginBottom: 24, fontSize: 11 }}>Certificate of Completion</div>
@@ -1080,7 +1080,7 @@ ID: ${certId}`;
                 <div style={{ color: grade.color, fontFamily: 'monospace', fontSize: 11, fontWeight: 700 }}>{certId}</div>
               </div>
               
-              <div style={{ borderTop: '1px solid #1E3050', paddingTop: 14, display: 'flex', justifyContent: 'center', gap: 16, fontSize: 10, color: '#CBD5E1', flexWrap: 'wrap' }}>
+              <div style={{ borderTop: '1px solid #1E3050', marginTop: 10, paddingTop: 16, display: 'flex', justifyContent: 'center', gap: 16, fontSize: 11, color: '#94A3B8', flexWrap: 'wrap', fontWeight: 500 }}>
                 <span>{BRAND.url}</span>
                 <span>{BRAND.email}</span>
               </div>
