@@ -6,8 +6,7 @@ import { CERT_STORE_KEY, buildQRPayload, buildVerifyUrl, parseQRPayload, escHtml
 import { Nav, Page, ShieldLogo } from './components.jsx';
 import { onAuthChange, signUpWithEmail, signInWithEmail } from './auth.js';
 import { saveCertificate, getCertificate, getUserCertificates, getUserProfile, deleteCertificate } from './db.js';
-import { auth, storage } from './firebase.js';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth } from './firebase.js';
 import logoUrl from '../images/logo.png';
 
 const TYPE_ROUTES = {
@@ -964,83 +963,7 @@ ID: ${certId}`;
       if (el && el.parentNode) {
         el.parentNode.removeChild(el);
       }
-    }
-  }
 
-  async function shareToLinkedIn() {
-    const html2canvas = window.html2canvas;
-    if (!html2canvas) {
-      alert('Image library is still loading. Please try again.');
-      return;
-    }
-    setBusy('linkedin');
-    
-    const el = document.createElement('div');
-    el.style.cssText = `
-      position: absolute; 
-      top: -20000px; 
-      left: 0; 
-      width: 1123px; 
-      height: 794px;
-      box-sizing: border-box;
-      overflow: hidden;
-      background: #0C1B2E;
-      padding: 0px;
-      color: #fff;
-    `;
-    document.body.appendChild(el);
-    
-    try {
-      el.innerHTML = await buildCertHtml();
-      
-      const images = Array.from(el.querySelectorAll('img'));
-      await Promise.all(images.map(async (img) => {
-        try {
-          if (!img.complete) {
-            await new Promise((resolve) => {
-              img.onload = resolve;
-              img.onerror = resolve;
-            });
-          }
-          await img.decode();
-        } catch (e) {
-          console.warn("Image decode failed", e);
-        }
-      }));
-
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#0C1B2E',
-        logging: false
-      });
-      
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      if (!blob) throw new Error("Blob generation failed");
-
-      // Upload to Firebase Storage
-      const storageRef = ref(storage, `shared_certs/${certId}.png`);
-      await uploadBytes(storageRef, blob);
-      const publicUrl = await getDownloadURL(storageRef);
-
-      // Open LinkedIn Share with the image URL
-      const linkedInUrl = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(publicUrl)}&title=${encodeURIComponent(`I scored ${grade.grade} (${pct}%) on the Cyber Hygiene Assessment!`)}&summary=${encodeURIComponent(`I just completed the Cyber Hygiene Assessment by Hackers InfoTech and achieved the grade ${grade.grade} (${pct}%). Verify my certificate: ${verifyUrl}`)}&source=${encodeURIComponent('Hackers InfoTech')}`;
-      
-      window.open(linkedInUrl, '_blank');
-
-    } catch (error) {
-      console.error("Image generation/upload failed:", error);
-      alert('Error generating LinkedIn preview. Make sure Firebase Storage is enabled and rules are configured in your Firebase Console.');
-    } finally {
-      if (el && el.parentNode) {
-        el.parentNode.removeChild(el);
-      }
-      setBusy('');
-    }
-  }
 
   function handleCopyVerifyLink() {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1158,21 +1081,17 @@ ID: ${certId}`;
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>🌐 Share Your Achievement</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {/* LinkedIn Post */}
-              <button
-                type="button"
-                onClick={shareToLinkedIn}
-                disabled={busy === 'linkedin'}
-                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0A66C2', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s', border: 'none', cursor: busy === 'linkedin' ? 'not-allowed' : 'pointer', opacity: busy === 'linkedin' ? 0.7 : 1 }}
-                onMouseEnter={e => busy !== 'linkedin' && (e.currentTarget.style.opacity = '0.85')}
-                onMouseLeave={e => busy !== 'linkedin' && (e.currentTarget.style.opacity = '1')}
+              <a
+                href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(verifyUrl)}&title=${encodeURIComponent(`I scored ${grade.grade} (${pct}%) on the Cyber Hygiene Assessment!`)}&summary=${encodeURIComponent(`I just completed the Cyber Hygiene Assessment by Hackers InfoTech and achieved the grade ${grade.grade} (${pct}%). Verify my certificate: ${verifyUrl}`)}&source=${encodeURIComponent('Hackers InfoTech')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0A66C2', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
               >
-                {busy === 'linkedin' ? '⏳ Uploading...' : (
-                  <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                    LinkedIn
-                  </>
-                )}
-              </button>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                LinkedIn
+              </a>
               {/* Facebook */}
               <a
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(verifyUrl)}`}
