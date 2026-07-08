@@ -1001,6 +1001,14 @@ ID: ${certId}`;
   }
 
   async function sendEmail() {
+    const targetEmail = lead.email || (auth.currentUser ? auth.currentUser.email : null);
+    
+    if (!targetEmail) {
+      alert("No email address found to send this report to. Please update your profile.");
+      setEmailState('');
+      return;
+    }
+
     if (!window.emailjs) {
       alert('Email library is still loading. Please try again.');
       return;
@@ -1009,7 +1017,7 @@ ID: ${certId}`;
     try {
       window.emailjs.init(BRAND.emailjs.publicKey);
       await window.emailjs.send(BRAND.emailjs.serviceId, BRAND.emailjs.templateId, {
-        to_email: lead.email,
+        to_email: targetEmail,
         to_name: lead.name,
         subject: `Your Cyber Hygiene Report - Grade ${grade.grade} (${pct}%) | Hackers InfoTech`,
         html_body: `<div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:30px;"><h2>Hackers InfoTech</h2><p>Dear <b>${escHtml(lead.name)}</b>,</p><p>Your grade is <b>${grade.grade}</b> (${pct}%).</p>${failed.length > 0 ? failed.map((q, index) => `<p><b>${index + 1}. ${escHtml(q.text)}</b><br/>Fix: ${escHtml(q.tip)}</p>`).join('') : '<p>Excellent! No action items needed.</p>'}
