@@ -963,82 +963,7 @@ ID: ${certId}`;
       if (el && el.parentNode) {
         el.parentNode.removeChild(el);
       }
-    }
-  }
 
-  async function shareOnMobile() {
-    if (!window.html2canvas) {
-      alert('Image library is still loading. Please try again.');
-      return;
-    }
-    setBusy('mobile-share');
-
-    const el = document.createElement('div');
-    el.style.cssText = `
-      position: absolute; 
-      top: -20000px; 
-      left: 0; 
-      width: 1123px; 
-      height: 794px;
-      box-sizing: border-box;
-      overflow: hidden;
-      background: #0C1B2E;
-      padding: 0px;
-      color: #fff;
-    `;
-    document.body.appendChild(el);
-    
-    try {
-      el.innerHTML = await buildCertHtml();
-      
-      const images = Array.from(el.querySelectorAll('img'));
-      await Promise.all(images.map(async (img) => {
-        try {
-          if (!img.complete) {
-            await new Promise((resolve) => {
-              img.onload = resolve;
-              img.onerror = resolve;
-            });
-          }
-          await img.decode();
-        } catch (e) {}
-      }));
-      await new Promise(r => setTimeout(r, 400));
-      
-      const canvas = await window.html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#0C1B2E', logging: false });
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      if (!blob) throw new Error("Blob failed");
-
-      const file = new File([blob], `HIT_Certificate_${certId}.png`, { type: 'image/png' });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'Cyber Hygiene Assessment Certificate',
-          text: `I scored ${grade.grade} (${pct}%) on the Cyber Hygiene Assessment! Verify it here: ${verifyUrl}`,
-        });
-      } else {
-        // Fallback to downloading
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `HIT_Certificate_${certId}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        alert('Your browser does not support native sharing. The certificate image has been downloaded instead! You can now manually attach it to a social media post.');
-      }
-    } catch (e) {
-      if (e.name !== 'AbortError') {
-        console.error("Share failed", e);
-        alert('Error sharing certificate.');
-      }
-    } finally {
-      if (el && el.parentNode) el.parentNode.removeChild(el);
-      setBusy('');
-    }
-  }
 
   function handleCopyVerifyLink() {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1188,22 +1113,10 @@ ID: ${certId}`;
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                Twitter
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.763l7.724-8.833L1.5 2.25h6.312l4.261 5.631zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                X (Twitter)
               </a>
             </div>
-            
-            {/* Smart Mobile Share */}
-            <button
-              type="button"
-              onClick={shareOnMobile}
-              disabled={busy === 'mobile-share'}
-              style={{ width: '100%', marginTop: 10, background: '#FCE7F3', border: '1px solid #FBCFE8', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, color: '#DB2777', cursor: busy === 'mobile-share' ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
-              onMouseEnter={e => busy !== 'mobile-share' && (e.currentTarget.style.background = '#FBCFE8')}
-              onMouseLeave={e => busy !== 'mobile-share' && (e.currentTarget.style.background = '#FCE7F3')}
-            >
-              {busy === 'mobile-share' ? '⏳ Preparing...' : '📲 Smart Share (Best for Mobile)'}
-            </button>
           </div>
         </div>
 
