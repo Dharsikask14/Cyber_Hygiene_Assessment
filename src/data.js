@@ -3,7 +3,7 @@ export const BRAND = {
   url: 'hackersinfotech.com',
   city: 'Coimbatore, India',
   phone: '+91 XXXXX XXXXX',
-  email: 'dharshsk@gmail.com',
+  email: 'dharshsk9@gmail.com',
   bookingUrl: 'https://calendly.com/hackersinfotech',
   emailjs: {
     serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID,

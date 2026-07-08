@@ -4,7 +4,7 @@ const BRAND = {
   url:        "hackersinfotech.com",
   city:       "Coimbatore, India",
   phone:      "+91 XXXXX XXXXX",       // update this
-  email:      "dharshsk@gmail.com",
+  email:      "dharshsk9@gmail.com",
   bookingUrl: "https://calendly.com/hackersinfotech", // update this
   emailjs: {
     serviceId:  "service_bn1go7u",
