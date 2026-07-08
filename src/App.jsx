@@ -963,6 +963,8 @@ ID: ${certId}`;
       if (el && el.parentNode) {
         el.parentNode.removeChild(el);
       }
+    }
+  }
 
 
   function handleCopyVerifyLink() {
