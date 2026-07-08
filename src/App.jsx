@@ -1216,14 +1216,11 @@ function ConsultationCta({ isHistoryView }) {
         <span style={{ fontSize: 12, color: '#64748B' }}>🌐 {BRAND.url}</span>
         <span style={{ fontSize: 12, color: '#64748B' }}>📞 {BRAND.phone}</span>
         <span style={{ fontSize: 12, color: '#64748B' }}>✉️ {BRAND.email}</span>
-      </div>
-    </div>
-  );
-}
-
-function VerifyIdPage() {
-  const [certId, setCertId] = useState('');
-  const [name, setName] = useState('');
+function MyCertificatesPage() {
+  const [certs, setCerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [certToDelete, setCertToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [errors, setErrors] = useState({});
   const [warning, setWarning] = useState(false);
   const [status, setStatus] = useState(null);
@@ -1896,12 +1893,7 @@ function MyCertificatesPage() {
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={() => navigateTo(`/html/results.html?id=${cert.certId}`)} className="btn-secondary" style={{ padding: '8px 16px', fontSize: 13 }}>View Details</button>
-                    <button onClick={async () => {
-                      if (window.confirm('Are you sure you want to delete this certificate? This action cannot be undone.')) {
-                        await deleteCertificate(cert.certId);
-                        setCerts(prev => prev.filter(c => c.certId !== cert.certId));
-                      }
-                    }} style={{ padding: '8px 16px', fontSize: 13, background: 'transparent', border: '1px solid #EF4444', color: '#EF4444', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#EF4444'; }}>Delete</button>
+                    <button onClick={() => setCertToDelete(cert.certId)} style={{ padding: '8px 16px', fontSize: 13, background: 'transparent', border: '1px solid #EF4444', color: '#EF4444', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#EF4444'; }}>Delete</button>
                   </div>
                 </div>
               );
@@ -1909,6 +1901,52 @@ function MyCertificatesPage() {
           </div>
         )}
       </Page>
+
+      {certToDelete && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: 'var(--card-bg)', width: '90%', maxWidth: 400, borderRadius: 16, padding: 32, border: '1px solid var(--border-color)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#EF4444' }}>
+              <i className="ti ti-trash" style={{ fontSize: 28 }} />
+            </div>
+            <h3 style={{ fontSize: 20, fontWeight: 700, textAlign: 'center', marginBottom: 12 }}>Delete Certificate?</h3>
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 24, fontSize: 14, lineHeight: 1.6 }}>
+              Are you sure you want to permanently delete this certificate? This action cannot be undone and it will be completely removed from our records.
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button 
+                type="button" 
+                onClick={() => setCertToDelete(null)}
+                className="btn-secondary" 
+                style={{ flex: 1, padding: '12px 0', fontSize: 15 }}
+                disabled={isDeleting}
+              >Cancel</button>
+              <button 
+                type="button" 
+                onClick={async () => {
+                  setIsDeleting(true);
+                  try {
+                    await deleteCertificate(certToDelete);
+                    // Permanently delete from local storage cache too
+                    const store = readJson(CERT_STORE_KEY, {});
+                    if (store[certToDelete]) {
+                      delete store[certToDelete];
+                      localStorage.setItem(CERT_STORE_KEY, JSON.stringify(store));
+                    }
+                    setCerts(prev => prev.filter(c => c.certId !== certToDelete));
+                  } catch(e) {
+                    alert('Error deleting certificate');
+                  }
+                  setIsDeleting(false);
+                  setCertToDelete(null);
+                }} 
+                className="btn-primary" 
+                style={{ flex: 1, padding: '12px 0', background: '#EF4444', borderColor: '#EF4444', fontSize: 15 }}
+                disabled={isDeleting}
+              >{isDeleting ? 'Deleting...' : 'Yes, Delete'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
