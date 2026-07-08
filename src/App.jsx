@@ -1216,11 +1216,14 @@ function ConsultationCta({ isHistoryView }) {
         <span style={{ fontSize: 12, color: '#64748B' }}>🌐 {BRAND.url}</span>
         <span style={{ fontSize: 12, color: '#64748B' }}>📞 {BRAND.phone}</span>
         <span style={{ fontSize: 12, color: '#64748B' }}>✉️ {BRAND.email}</span>
-function MyCertificatesPage() {
-  const [certs, setCerts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [certToDelete, setCertToDelete] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+      </div>
+    </div>
+  );
+}
+
+function VerifyIdPage() {
+  const [certId, setCertId] = useState('');
+  const [name, setName] = useState('');
   const [errors, setErrors] = useState({});
   const [warning, setWarning] = useState(false);
   const [status, setStatus] = useState(null);
@@ -1842,6 +1845,8 @@ function ScannerPage() {
 function MyCertificatesPage() {
   const [loading, setLoading] = useState(true);
   const [certs, setCerts] = useState([]);
+  const [certToDelete, setCertToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   useEffect(() => {
     const unsub = onAuthChange(async (firebaseUser) => {
@@ -1908,7 +1913,7 @@ function MyCertificatesPage() {
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#EF4444' }}>
               <i className="ti ti-trash" style={{ fontSize: 28 }} />
             </div>
-            <h3 style={{ fontSize: 20, fontWeight: 700, textAlign: 'center', marginBottom: 12 }}>Delete Certificate?</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 700, textAlign: 'center', margin: '0 0 12px 0', color: 'var(--text-primary)' }}>Delete Certificate?</h3>
             <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 24, fontSize: 14, lineHeight: 1.6 }}>
               Are you sure you want to permanently delete this certificate? This action cannot be undone and it will be completely removed from our records.
             </p>
@@ -1950,8 +1955,6 @@ function MyCertificatesPage() {
     </>
   );
 }
-}
-
 
 function ProfilePage() {
   const [loading, setLoading] = useState(true);
