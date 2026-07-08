@@ -5,7 +5,7 @@ import { ALL, BRAND, GENERAL_SECTIONS, IT_SECTIONS, getGrade, maxScore } from '.
 import { CERT_STORE_KEY, buildQRPayload, buildVerifyUrl, parseQRPayload, escHtml, genCertId, linkTo, navigateTo, readJson, sha256 } from './utils.js';
 import { Nav, Page, ShieldLogo } from './components.jsx';
 import { onAuthChange, signUpWithEmail, signInWithEmail } from './auth.js';
-import { saveCertificate, getCertificate, getUserCertificates, getUserProfile } from './db.js';
+import { saveCertificate, getCertificate, getUserCertificates, getUserProfile, deleteCertificate } from './db.js';
 import { auth } from './firebase.js';
 import logoUrl from '../images/logo.png';
 
@@ -111,11 +111,11 @@ function HomePage() {
   }
 
   return (
-    <Page style={{ position: 'relative', zIndex: 1, height: 'calc(100vh - 56px)', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 40px' }}>
+    <Page style={{ position: 'relative', zIndex: 1, height: 'calc(100vh - 56px)', overflow: 'hidden', display: 'flex', alignItems: 'center', padding: '0' }}>
       <div style={{ position: 'absolute', top: -100, left: -150, width: 450, height: 450, background: 'var(--primary-color)', filter: 'blur(140px)', opacity: 0.12, borderRadius: '50%', zIndex: -1, pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', top: 250, right: -200, width: 400, height: 400, background: '#8B5CF6', filter: 'blur(140px)', opacity: 0.1, borderRadius: '50%', zIndex: -1, pointerEvents: 'none' }} />
 
-      <div className="hero-grid" style={{ padding: '0' }}>
+      <div className="hero-grid" style={{ padding: '0 40px', width: '100%', maxWidth: '100%' }}>
         <div style={{ textAlign: 'left' }}>
           <h1 style={{ fontSize: 54, fontWeight: 700, lineHeight: 1.1, margin: '0 0 16px', letterSpacing: -1 }}>
             How safe are you<br /><span className="text-gradient">online?</span>
@@ -179,7 +179,6 @@ function HomePage() {
           <div style={{ fontSize: 15, color: 'var(--text-secondary)', fontWeight: 500, opacity: 0.8 }}>An ISO 9001:2015 Certified Company</div>
         </div>
       </div>
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 5, background: 'linear-gradient(90deg, var(--primary-color) 0%, #8B5CF6 100%)', zIndex: 10 }} />
     </Page>
   );
 }
@@ -345,7 +344,7 @@ function TypePage() {
   }
 
   return (
-    <Page style={{ paddingTop: 48 }}>
+    <Page style={{ paddingTop: 48, paddingBottom: 48 }}>
       <h2 style={{ fontSize: 26, fontWeight: 600, marginBottom: 8, textAlign: 'center' }}>Who is this for?</h2>
       <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 36, fontSize: 15 }}>Choose the profile that best matches you</p>
       <div className="grid-2" style={{ maxWidth: 600, margin: '0 auto 32px' }}>
@@ -427,7 +426,7 @@ function AssessmentPage({ type }) {
   }
 
   return (
-    <Page style={{ paddingTop: 32 }}>
+    <Page style={{ paddingTop: 32, paddingBottom: 48 }}>
       <div style={{ marginBottom: 22 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
           <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>Section {sec + 1} of {sections.length}</span>
@@ -548,7 +547,7 @@ function LeadPage() {
   }
 
   return (
-    <Page style={{ padding: '40px 40px', maxWidth: 500, display: 'flex', flexDirection: 'column', gap: 0 }}>
+    <Page style={{ padding: '40px 40px 48px', maxWidth: 500, display: 'flex', flexDirection: 'column', gap: 0 }}>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
         <div style={{ fontSize: 36, marginBottom: 8 }}>🎉</div>
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Your results are ready!</h2>
@@ -890,6 +889,99 @@ ID: ${certId}`;
     }
   }
 
+  async function shareCertificateImage() {
+    const html2canvas = window.html2canvas;
+    if (!html2canvas) {
+      alert('Image library is still loading. Please try again.');
+      return;
+    }
+    setBusy('share');
+    
+    const el = document.createElement('div');
+    el.style.cssText = `
+      position: absolute; 
+      top: -20000px; 
+      left: 0; 
+      width: 1123px; 
+      height: 794px;
+      box-sizing: border-box;
+      overflow: hidden;
+      background: #0C1B2E;
+      padding: 40px 40px;
+      color: #fff;
+    `;
+    document.body.appendChild(el);
+    
+    try {
+      el.innerHTML = await buildCertHtml();
+      
+      const images = Array.from(el.querySelectorAll('img'));
+      await Promise.all(images.map(async (img) => {
+        try {
+          if (!img.complete) {
+            await new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+            });
+          }
+          await img.decode();
+        } catch (e) {
+          console.warn("Image decode failed", e);
+        }
+      }));
+
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#0C1B2E',
+        logging: false
+      });
+      
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          alert('Failed to generate image.');
+          setBusy('');
+          return;
+        }
+        
+        const file = new File([blob], 'Cyber_Hygiene_Certificate.png', { type: 'image/png' });
+        const shareData = {
+          title: 'Cyber Hygiene Assessment Certificate',
+          text: `I scored ${grade.grade} (${pct}%) on the Cyber Hygiene Assessment by Hackers InfoTech! Verify here: ${verifyUrl}`,
+          files: [file]
+        };
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share(shareData);
+          } catch (err) {
+            console.error('Share failed or was cancelled by user', err);
+          }
+        } else {
+          // Fallback to image download
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'Cyber_Hygiene_Certificate.png';
+          a.click();
+          alert('Your browser does not support direct image sharing. We downloaded the certificate as an image so you can attach it directly to your LinkedIn post!');
+        }
+        setBusy('');
+      }, 'image/png');
+
+    } catch (error) {
+      console.error("Image generation failed:", error);
+      alert('Error generating certificate image. Please try again.');
+      setBusy('');
+    } finally {
+      if (el && el.parentNode) {
+        el.parentNode.removeChild(el);
+      }
+    }
+  }
+
   function handleCopyVerifyLink() {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(verifyUrl).then(() => {
@@ -947,7 +1039,7 @@ ID: ${certId}`;
   return (
     <>
       {queryId && <Nav />}
-      <Page style={{ paddingTop: queryId ? 36 : 36 }}>
+      <Page style={{ paddingTop: 36, paddingBottom: 48 }}>
         <div className="card" style={{ background: grade.bg, borderColor: `${grade.color}33`, textAlign: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: grade.color, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 10 }}>Cyber Safety Grade · {date}</div>
           <div style={{ fontSize: 88, fontWeight: 700, color: grade.color, lineHeight: 1, fontFamily: "'DM Mono', monospace" }}>{grade.grade}</div>
@@ -999,35 +1091,26 @@ ID: ${certId}`;
             {emailState === 'sending' ? '⏳ Sending...' : emailState === 'sent' ? `✅ Report sent to ${lead.email}` : emailState === 'failed' ? '❌ Send failed. Check config.' : `📧 Email Report to ${lead.email}`}
           </button>
 
-          {/* Add to LinkedIn Profile */}
-          <a
-            href={`https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent('Cyber Hygiene Assessment')}&organizationName=${encodeURIComponent('Hackers InfoTech')}&issueYear=${new Date().getFullYear()}&issueMonth=${new Date().getMonth() + 1}&certId=${certId}&certUrl=${encodeURIComponent(verifyUrl)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0A66C2', color: '#fff', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s', marginBottom: 14 }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-            Add to LinkedIn Profile
-          </a>
-          
           {/* Social Share */}
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>🌐 Share Your Achievement</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {/* LinkedIn */}
-              <a
-                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(verifyUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0A66C2', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'opacity 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              {/* Native Image Share */}
+              <button
+                type="button"
+                onClick={shareCertificateImage}
+                disabled={busy === 'share'}
+                style={{ flex: 1, minWidth: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0A66C2', color: '#fff', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, border: 'none', cursor: busy === 'share' ? 'not-allowed' : 'pointer', transition: 'opacity 0.2s', opacity: busy === 'share' ? 0.7 : 1 }}
+                onMouseEnter={e => busy !== 'share' && (e.currentTarget.style.opacity = '0.85')}
+                onMouseLeave={e => busy !== 'share' && (e.currentTarget.style.opacity = '1')}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                LinkedIn
-              </a>
+                {busy === 'share' ? '⏳ Preparing...' : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    LinkedIn
+                  </>
+                )}
+              </button>
               {/* Facebook */}
               <a
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(verifyUrl)}`}
@@ -1769,7 +1852,7 @@ function MyCertificatesPage() {
   return (
     <>
       <Nav />
-      <Page style={{ paddingTop: 36 }}>
+      <Page style={{ paddingTop: 36, paddingBottom: 48 }}>
         <button 
           type="button" 
           onClick={() => history.back()} 
@@ -1800,7 +1883,15 @@ function MyCertificatesPage() {
                     <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{cert.assessmentType === 'it' ? 'IT & Tech' : 'General'} Assessment</div>
                     <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Grade: <b style={{color: 'var(--text-primary)'}}>{cert.grade}</b> ({cert.percentage}%) • {d}</div>
                   </div>
-                  <button onClick={() => navigateTo(`/html/results.html?id=${cert.certId}`)} className="btn-secondary" style={{ padding: '8px 16px', fontSize: 13 }}>View Details</button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => navigateTo(`/html/results.html?id=${cert.certId}`)} className="btn-secondary" style={{ padding: '8px 16px', fontSize: 13 }}>View Details</button>
+                    <button onClick={async () => {
+                      if (window.confirm('Are you sure you want to delete this certificate? This action cannot be undone.')) {
+                        await deleteCertificate(cert.certId);
+                        setCerts(prev => prev.filter(c => c.certId !== cert.certId));
+                      }
+                    }} style={{ padding: '8px 16px', fontSize: 13, background: 'transparent', border: '1px solid #EF4444', color: '#EF4444', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#EF4444'; }}>Delete</button>
+                  </div>
                 </div>
               );
             })}

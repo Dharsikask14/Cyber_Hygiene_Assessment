@@ -1,7 +1,7 @@
 // Firestore database helpers — no Firebase Storage needed
 // PDFs are generated on-demand in the browser (free, no storage cost)
 import {
-  doc, setDoc, getDoc, collection, query, where, getDocs, serverTimestamp,
+  doc, setDoc, getDoc, collection, query, where, getDocs, serverTimestamp, deleteDoc
 } from 'firebase/firestore';
 import { db } from './firebase.js';
 
@@ -42,6 +42,11 @@ export async function getUserCertificates(uid) {
   const q = query(collection(db, 'certificates'), where('uid', '==', uid));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function deleteCertificate(certId) {
+  if (!certId) return;
+  await deleteDoc(doc(db, 'certificates', certId));
 }
 
 // ─── User Profile ─────────────────────────────────────────────────
